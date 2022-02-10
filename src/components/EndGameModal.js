@@ -20,7 +20,7 @@ export const EndGameModal = ({
   playAgain,
   day,
   currentRow,
-  cellStatuses,
+  cellStatuses
 }) => {
   const CloseButton = () => {
     return (
@@ -48,9 +48,28 @@ export const EndGameModal = ({
     return count
   }
 
+  function countChallenges(array) {
+    var wins = 0
+    var losses = 0
+    var num = Number(array[500])
+    for (let i=0; i<num; i++){
+      if (Number(array[501+i]) > 0) wins++
+      else losses++
+    }
+    return [wins,losses]
+  }
+
   const gameStateList = JSON.parse(localStorage.getItem('gameStateList'))
+  var challengeWord = JSON.parse(localStorage.getItem('challengeWord'))
+  var challengeIndex = JSON.parse(localStorage.getItem('challengeIndex'))
   var wins = getOccurrence(gameStateList, 'won')
   var losses = getOccurrence(gameStateList, 'lost')
+  var challenge_counts = countChallenges(gameStateList)
+
+  const challenge_url = () => {
+    return document.location.origin+document.location.pathname+'?wi='+challengeIndex
+  }
+
 
   const ShareButton = (props) => {
     const [buttonPressed, setButtonPressed] = useState(false)
@@ -62,11 +81,15 @@ export const EndGameModal = ({
     return (
       <button
         type="button"
-        className="rounded px-6 py-2 mt-8 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
+        className="rounded px-6 py-2 mt-6 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
         onClick={() => {
           setButtonPressed(true)
+          if (gameState === state.created) {
+            navigator.clipboard.writeText(challenge_url())
+            return
+          }
           navigator.clipboard.writeText(
-            `Wordle ${day} ${gameState === state.won ? currentRow: 'X'}/6\n\n` +
+            `Wordle Challenge ${day()} ${gameState === state.won ? currentRow: 'X'}/6\n\n` +
               cellStatuses
                 .map((row) => {
                   if (row.every((item) => item !== status.unguessed)) {
@@ -99,7 +122,7 @@ export const EndGameModal = ({
           )
         }}
       >
-        {buttonPressed ? 'Copied!' : 'Share'}
+        {buttonPressed ? 'Copied!' : (gameState === state.created ? 'Share challenge' : 'Share')}
       </button>
     )
   }
@@ -120,7 +143,13 @@ export const EndGameModal = ({
                 Won: {wins}
               </p>
               <p className="mt-3 text-2xl">
+                Challenges Won: {challenge_counts[0]}
+              </p>
+              <p className="mt-3 text-2xl">
                 Lost: {losses}
+              </p>
+              <p className="mt-3 text-2xl">
+                Challenges Lost: {challenge_counts[1]}
               </p>
             </>
           )}
@@ -136,20 +165,47 @@ export const EndGameModal = ({
                   Won: {wins}
                 </p>
                 <p className="mt-3 text-2xl">
+                  Challenges Won: {challenge_counts[0]}
+                </p>
+                <p className="mt-3 text-2xl">
                   Lost: {losses}
                 </p>
+                <p className="mt-3 text-2xl">
+                  Challenges Lost: {challenge_counts[1]}
+                </p>
               </div>
+            </>
+          )}
+          {gameState === state.created && (
+            <>
+              <img src={Success} alt="success" height="auto" width="auto" />
+              <h1 className=" text-3xl">Challenge Created!</h1>
+              <p className="mt-3 text-2xl">
+                Chosen answer: <strong>{challengeWord}</strong>
+              </p>
+              <p className="mt-1 text-2xl">
+                Challenge url: 
+              </p>
+              <p>
+                <small>{challenge_url()}</small>
+              </p>
             </>
           )}
           {gameState === state.playing && (
             <>
               <img src={WIP} alt="keep playing" height="auto" width="80%" />
               <div className="text-primary dark:text-primary-dark text-4xl text-center">
-                <p className="mt-3 text-2xl">
+              <p className="mt-3 text-2xl">
                   Won: {wins}
                 </p>
                 <p className="mt-3 text-2xl">
+                  Challenges Won: {challenge_counts[0]}
+                </p>
+                <p className="mt-3 text-2xl">
                   Lost: {losses}
+                </p>
+                <p className="mt-3 text-2xl">
+                  Challenges Lost: {challenge_counts[1]}
                 </p>
               </div>
             </>

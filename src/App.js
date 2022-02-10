@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { letters, status } from './constants'
 import { Keyboard } from './components/Keyboard'
-import words from './data/words'
+import new_words from './data/new_words'
 
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { ReactComponent as Info } from './data/Info.svg'
@@ -11,7 +11,7 @@ import { ReactComponent as Share } from './data/Share.svg'
 import { InfoModal } from './components/InfoModal'
 import { SettingsModal } from './components/SettingsModal'
 import { EndGameModal } from './components/EndGameModal'
-
+import { ChallengeInputModal } from './components/ChallengeInputModal'
 import { Menu, Transition } from '@headlessui/react'
 
 function classNames(...classes) {
@@ -19,25 +19,73 @@ function classNames(...classes) {
 }
 
 const state = {
+  playingChallenge: 'playingChallenge',
   playing: 'playing',
+  creating: 'creating',
+  created: 'created',
   won: 'won',
   lost: 'lost',
+  challenge_won: 'challenge won',
+  challenge_lost: 'challenge lost'
 }
 
 const getDayAnswer = (day_) => {
   return wordle_answers[day_-1].toUpperCase()
 }
+const getDayAnswerWithIndex = (index) => {
+  if (index < new_words.length) { return new_words[index].toUpperCase() }
+  return ""
+}
 
 // Set the day number of the puzzle to display and show it as the address bar query string
 
 const setDay = newDay => {
-  if (newDay < 1 || newDay > og_day) return;
-  day = newDay;
-  window.history.pushState({}, '', '?' + day);
+  if (wordIndex < 0) {
+    if (newDay < 1 || newDay > og_day) {
+      newDay = og_day; 
+    }
+    day = newDay;
+    var word = getDayAnswer(day);
+    wordIndex = new_words.indexOf(word.toLowerCase());
+    console.log('wordIndex set to '+wordIndex);
+  }
+  window.history.pushState({}, '', '?wi=' + wordIndex);
 };
 
 const getDay = (og_day) => {
   const { search } = document.location;
+  var url_day = og_day
+  if (search) {
+    const urlParams = new URLSearchParams(search);
+    var i = urlParams.get('wi');
+    if ( i && i > 0 || i < new_words.length ) {
+      wordIndex = i;
+      console.log('wordIndex set to '+wordIndex);
+      if (getDayAnswer(og_day).toLowerCase() == new_words[wordIndex]){
+        day = og_day;
+        return og_day;
+      }
+      return -1;
+    }  
+    if (isNaN(search.slice(1))) {
+      url_day = og_day
+    } else {
+      url_day = parseInt(search.slice(1), 10);
+    }
+    if (url_day > og_day || url_day < 1) {
+      url_day = og_day
+    }
+    return url_day
+  }
+  else {
+    return og_day
+  }
+}
+
+const getWordIndex = (og_day) => {
+  const { search } = document.location;
+  const urlParams = new URLSearchParams(search);
+  const word_index = urlParams.get('wi');
   var url_day = og_day
   if (search) {
     if (isNaN(search.slice(1))) {
@@ -64,7 +112,8 @@ const getOGDay = () => {
 }
 
 const wordle_answers = ["rebut", "sissy", "humph", "awake", "blush", "focal", "evade", "naval", "serve", "heath", "dwarf", "model", "karma", "stink", "grade", "quiet", "bench", "abate", "feign", "major", "death", "fresh", "crust", "stool", "colon", "abase", "marry", "react", "batty", "pride", "floss", "helix", "croak", "staff", "paper", "unfed", "whelp", "trawl", "outdo", "adobe", "crazy", "sower", "repay", "digit", "crate", "cluck", "spike", "mimic", "pound", "maxim", "linen", "unmet", "flesh", "booby", "forth", "first", "stand", "belly", "ivory", "seedy", "print", "yearn", "drain", "bribe", "stout", "panel", "crass", "flume", "offal", "agree", "error", "swirl", "argue", "bleed", "delta", "flick", "totem", "wooer", "front", "shrub", "parry", "biome", "lapel", "start", "greet", "goner", "golem", "lusty", "loopy", "round", "audit", "lying", "gamma", "labor", "islet", "civic", "forge", "corny", "moult", "basic", "salad", "agate", "spicy", "spray", "essay", "fjord", "spend", "kebab", "guild", "aback", "motor", "alone", "hatch", "hyper", "thumb", "dowry", "ought", "belch", "dutch", "pilot", "tweed", "comet", "jaunt", "enema", "steed", "abyss", "growl", "fling", "dozen", "boozy", "erode", "world", "gouge", "click", "briar", "great", "altar", "pulpy", "blurt", "coast", "duchy", "groin", "fixer", "group", "rogue", "badly", "smart", "pithy", "gaudy", "chill", "heron", "vodka", "finer", "surer", "radio", "rouge", "perch", "retch", "wrote", "clock", "tilde", "store", "prove", "bring", "solve", "cheat", "grime", "exult", "usher", "epoch", "triad", "break", "rhino", "viral", "conic", "masse", "sonic", "vital", "trace", "using", "peach", "champ", "baton", "brake", "pluck", "craze", "gripe", "weary", "picky", "acute", "ferry", "aside", "tapir", "troll", "unify", "rebus", "boost", "truss", "siege", "tiger", "banal", "slump", "crank", "gorge", "query", "drink", "favor", "abbey", "tangy", "panic", "solar", "shire", "proxy", "point", "robot", "prick", "wince", "crimp", "knoll", "sugar", "whack", "mount", "perky", "could", "wrung", "light", "those", "moist", "shard", "pleat", "aloft", "skill", "elder", "frame", "humor", "pause", "ulcer", "ultra", "robin", "cynic", "agora", "aroma", "caulk", "shake", "pupal", "dodge", "swill", "tacit", "other", "thorn", "trove", "bloke", "vivid", "spill", "chant", "choke", "rupee", "nasty", "mourn", "ahead", "brine", "cloth", "hoard", "sweet", "month", "lapse", "watch", "today", "focus", "smelt", "tease", "cater", "movie", "lynch", "saute", "allow", "renew", "their", "slosh", "purge", "chest", "depot", "epoxy", "nymph", "found", "shall", "harry", "stove", "lowly", "snout", "trope", "fewer", "shawl", "natal", "fibre", "comma", "foray", "scare", "stair", "black", "squad", "royal", "chunk", "mince", "slave", "shame", "cheek", "ample", "flair", "foyer", "cargo", "oxide", "plant", "olive", "inert", "askew", "heist", "shown", "zesty", "hasty", "trash", "fella", "larva", "forgo", "story", "hairy", "train", "homer", "badge", "midst", "canny", "fetus", "butch", "farce", "slung", "tipsy", "metal", "yield", "delve", "being", "scour", "glass", "gamer", "scrap", "money", "hinge", "album", "vouch", "asset", "tiara", "crept", "bayou", "atoll", "manor", "creak", "showy", "phase", "froth", "depth", "gloom", "flood", "trait", "girth", "piety", "payer", "goose", "float", "donor", "atone", "primo", "apron", "blown", "cacao", "loser", "input", "gloat", "awful", "brink", "smite", "beady", "rusty", "retro", "droll", "gawky", "hutch", "pinto", "gaily", "egret", "lilac", "sever", "field", "fluff", "hydro", "flack", "agape", "wench", "voice", "stead", "stalk", "berth", "madam", "night", "bland", "liver", "wedge", "augur", "roomy", "wacky", "flock", "angry", "bobby", "trite", "aphid", "tryst", "midge", "power", "elope", "cinch", "motto", "stomp", "upset", "bluff", "cramp", "quart", "coyly", "youth", "rhyme", "buggy", "alien", "smear", "unfit", "patty", "cling", "glean", "label", "hunky", "khaki", "poker", "gruel", "twice", "twang", "shrug", "treat", "unlit", "waste", "merit", "woven", "octal", "needy", "clown", "widow", "irony", "ruder", "gauze", "chief", "onset", "prize", "fungi", "charm", "gully", "inter", "whoop", "taunt", "leery", "class", "theme", "lofty", "tibia", "booze", "alpha", "thyme", "eclat", "doubt", "parer", "chute", "stick", "trice", "alike", "sooth", "recap", "saint", "liege", "glory", "grate", "admit", "brisk", "soggy", "usurp", "scald", "scorn", "leave", "twine", "sting", "bough", "marsh", "sloth", "dandy", "vigor", "howdy", "enjoy"]
-var day;
+var day = -1;
+var wordIndex = -1;
 const og_day = getOGDay()
 setDay(getDay(og_day));
 var items_list = []
@@ -77,7 +126,7 @@ function App() {
   const reloadCount = Number(sessionStorage.getItem('reloadCount')) || 0;
 
   const initialStates = {
-    answer: () => getDayAnswer(day),
+    answer: () => getDayAnswerWithIndex(wordIndex),
     gameState: state.playing,
     board: [
       ['', '', '', '', ''],
@@ -101,7 +150,7 @@ function App() {
 
   const [answer, setAnswer] = useState(initialStates.answer)
   const [gameState, setGameState] = useState(initialStates.gameState)
-  const [gameStateList, setGameStateList] = useLocalStorage('gameStateList', Array(500).fill(initialStates.gameState))
+  const [gameStateList, setGameStateList] = useLocalStorage('gameStateList', Array(800).fill('0'))
   const [board, setBoard] = useState(initialStates.board)
   const [cellStatuses, setCellStatuses] = useState(initialStates.cellStatuses)
   const [currentRow, setCurrentRow] = useState(initialStates.currentRow)
@@ -115,6 +164,8 @@ function App() {
   const [firstTime, setFirstTime] = useLocalStorage('first-time', true)
   const [infoModalIsOpen, setInfoModalIsOpen] = useState(firstTime)
   const [settingsModalIsOpen, setSettingsModalIsOpen] = useState(false)
+  const [challengeInputModalIsOpen, setChallengeInputModalIsOpen] = useState(false)
+
 
   const openModal = () => setIsOpen(true)
   const closeModal = () => setIsOpen(false)
@@ -134,7 +185,7 @@ function App() {
   }
 
   useEffect(() => {
-    if (gameState !== state.playing) {
+    if (gameState == state.won || gameState == state.lost || gameState == state.created) {
       setTimeout(() => {
         openModal()
       }, 500)
@@ -218,21 +269,65 @@ function App() {
       setCurrentCol((prev) => prev + 1)
     }
   }
+  const createNew = () => {
+    console.log('creating new challenge')
+    setCellStatuses(initialStates.cellStatuses)
+    setLetterStatuses(initialStates.letterStatuses)
+    setGameState(state.creating)
+    setCurrentRow(initialStates.currentRow)
+    setCurrentCol(initialStates.currentCol)
+    setSubmittedInvalidWord(false)
+    const newBoard = [
+      ['', '', '', '', ''],
+    ];
+
+    setBoard((prev)=>{
+      return newBoard
+    })
+  }
+
+  const playChallengeHandle = () => {
+    setChallengeInputModalIsOpen(true)
+    setGameState(state.playingChallenge)
+  }
+
+  const challengeInputModalCloseHandle = () => {
+    setChallengeInputModalIsOpen(false)
+    setGameState(state.playing)
+  }
+
+  const onChallengeInputSubmit = (val) => {
+    console.log('Playing Challenge: '+val);
+    //challengeInputModalCloseHandle();
+    // do things here for playing challenge chosen
+    //playIndex(val)
+    window.open(val,"_self")
+  };
+ 
 
   const isValidWord = (word) => {
     if (word.length < 5) return false
-    return words[word.toLowerCase()]
+    return (new_words.indexOf(word.toLowerCase()) >= 0)
   }
 
   const onEnterPress = () => {
+    window.scrollTo(0,document.body.scrollHeight)
     const word = board[currentRow].join('')
     if (!isValidWord(word)) {
       setSubmittedInvalidWord(true)
       return
     }
 
-    if (currentRow === 6) return
+    if (gameState == state.creating) {
+      //setCellStatuses(Array(1).fill(Array(5).fill(status.green)))
+      localStorage.setItem('challengeWord', JSON.stringify(word))
+      localStorage.setItem('challengeIndex', JSON.stringify(new_words.indexOf(word.toLowerCase())))
+      setGameState(state.created)
+      return
+    }
 
+    if (currentRow === 6) return
+    
     updateCellStatuses(word, currentRow)
     updateLetterStatuses(word)
     setCurrentRow((prev) => prev + 1)
@@ -290,6 +385,7 @@ function App() {
 
   // every time cellStatuses updates, check if the game is won or lost
   useEffect(() => {
+    if (gameState !== state.playing && gameState !== state.playingChallenge) return
     const cellStatusesCopy = [...cellStatuses]
     const reversedStatuses = cellStatusesCopy.reverse()
     const lastFilledRow = reversedStatuses.find((r) => {
@@ -299,12 +395,23 @@ function App() {
     if (lastFilledRow && isRowAllGreen(lastFilledRow)) {
       setGameState(state.won)
       var newGameStateList = JSON.parse(localStorage.getItem('gameStateList'))
-      newGameStateList[day-1] = state.won
+      var count = Number(newGameStateList[500]);
+      if (day < 0) {
+        newGameStateList[501+count] = wordIndex.toString();
+        newGameStateList[500] = (count+1).toString();
+      } else {
+        newGameStateList[day-1] = state.won
+      }
       localStorage.setItem('gameStateList', JSON.stringify(newGameStateList))
     } else if (currentRow === 6) {
       setGameState(state.lost)
       var newGameStateList = JSON.parse(localStorage.getItem('gameStateList'))
-      newGameStateList[day-1] = state.lost
+      if (day < 0) {
+        newGameStateList[501+count] = (wordIndex*(-1)).toString();
+        newGameStateList[500] = (count+1).toString();
+      } else {
+        newGameStateList[day-1] = state.lost
+      }
       localStorage.setItem('gameStateList', JSON.stringify(newGameStateList))
     }
   }, [cellStatuses, currentRow])
@@ -375,8 +482,20 @@ function App() {
   const playLast = () => playDay(og_day)
 
   const playDay = (i) => {
+    day = i;
+    var word = getDayAnswer(i);
+    wordIndex = new_words.indexOf(word.toLowerCase());
     setDay(i)
     play()
+  }
+
+  const playIndex = (i) => {
+    if (i >= 0 || i < new_words.length) {
+      wordIndex = i;
+      day = -1;
+      setDay(i)
+      play()
+    }
   }
 
   var tempGameStateList = JSON.parse(localStorage.getItem('gameStateList'))
@@ -414,6 +533,9 @@ function App() {
     );
   });
 
+  var game_id = () => {
+    return wordIndex.toString()+(day>0?' (Day '+day.toString()+')':'')
+  }
   if (darkMode == true) {
     var html = document.getElementsByTagName( 'html' )[0]; // '0' to assign the first (and only `HTML` tag)
     html.setAttribute( 'class', 'dark-bg' );
@@ -432,7 +554,7 @@ function App() {
               <Settings />
             </button>
             <h1 className={"flex-1 text-center text-l xxs:text-lg sm:text-3xl tracking-wide font-bold font-og"}>
-              WORDLE ARCHIVE {day} {header_symbol}
+              WORDLE CHALLENGE! {game_id()} {header_symbol}
             </h1>
             <button className="mr-2" type="button" onClick={() => setIsOpen(true)}>
               <Share />
@@ -441,42 +563,19 @@ function App() {
               <Info />
             </button>
           </header>
-          <div className="flex flex-force-center items-center py-3">
-            <div className="flex items-center px-2">
-              <button
-                type="button"
-                className="rounded px-2 py-2 mt-2 w-24 text-sm nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
-                onClick={playPrevious}>Previous
-              </button>
-            </div>
-            <div className="flex items-center px-2">
-              <button
-                type="button"
-                className="rounded px-2 py-2 mt-2 w-24 text-sm nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
-                onClick={playRandom}>Random
-              </button>
-            </div>
-            <div className="flex items-center px-2">
-              <button
-                type="button"
-                className="rounded px-2 py-2 mt-2 w-24 text-sm nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
-                onClick={playNext}>Next
-              </button>
-            </div>
-          </div>
            <div className="flex flex-force-center items-center py-3">
             <div className="flex items-center px-2">
               <button
                 type="button"
                 className="rounded px-2 py-2 w-24 text-sm nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
-                onClick={playFirst}>First
+                onClick={playChallengeHandle}>Play Challenge
               </button>
             </div>
             <div className="flex items-center px-2">
               <Menu as="div" className="relative inline-block text-left">
                 <div>
                   <Menu.Button className="blurthis rounded px-2 py-2 w-24 text-sm nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark">
-                    Choose
+                    Play Previous
                   </Menu.Button>
                 </div>
                   <Menu.Items className="origin-top-right absolute right-0 mt-2 w-42 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none overflow-y-scroll h-56">
@@ -490,7 +589,7 @@ function App() {
               <button
                 type="button"
                 className="rounded px-2 py-2 w-24 text-sm nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
-                onClick={playLast}>Last
+                onClick={createNew}>Create Challenge
               </button>
             </div>
           </div>
@@ -533,7 +632,7 @@ function App() {
               closeModal()
               streakUpdated.current = false
             }}
-            day={day}
+            day={game_id} 
             currentRow={currentRow}
             cellStatuses={cellStatuses}
           />
@@ -545,13 +644,22 @@ function App() {
             toggleDarkMode={toggleDarkMode}
             colorBlindMode={colorBlindMode}
             toggleColorBlindMode={toggleColorBlindMode}
+          />          
+          <ChallengeInputModal
+            isOpen={challengeInputModalIsOpen}
+            handleClose={challengeInputModalCloseHandle}
+            styles={modalStyles}
+            darkMode={darkMode}
+            onSubmit={onChallengeInputSubmit}
+            colorBlindMode={colorBlindMode}
+            toggleColorBlindMode={toggleColorBlindMode}
           />
           <Keyboard
             letterStatuses={letterStatuses}
             addLetter={addLetter}
             onEnterPress={onEnterPress}
             onDeletePress={onDeletePress}
-            gameDisabled={gameState !== state.playing}
+            gameDisabled={gameState !== state.playing && gameState !== state.creating}
             colorBlindMode={colorBlindMode}
           />
         </div>
@@ -567,7 +675,7 @@ function App() {
               <Settings />
             </button>
             <h1 className={"flex-1 text-center text-xl xxs:text-2xl -mr-6 sm:text-4xl tracking-wide font-bold font-og"}>
-              WORDLE ARCHIVE {day}  {header_symbol}
+              WORDLE CHALLENGE {game_id()} {header_symbol}
             </h1>
             <button className="mr-6" type="button" onClick={() => setIsOpen(true)}>
               <Share />
@@ -580,22 +688,16 @@ function App() {
             <div className="flex items-center px-3">
               <button
                 type="button"
-                className="rounded px-3 py-2 mt-4 w-32 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
-                onClick={playFirst}>First
-              </button>
-            </div>
-            <div className="flex items-center px-3">
-              <button
-                type="button"
-                className="rounded px-3 py-2 mt-4 w-32 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
-                onClick={playPrevious}>Previous
+                className="rounded px-3 py-2 mt-1 w-42 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
+                //onClick={playFirst}>First
+                onClick={playChallengeHandle}>Play Challenge
               </button>
             </div>
             <div className="flex items-center px-3">
               <Menu as="div" className="relative inline-block text-left">
                 <div>
-                  <Menu.Button className="blurthis rounded px-3 py-2 mt-4 w-32 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark">
-                    Choose
+                  <Menu.Button className="blurthis rounded px-3 py-2 mt-1 w-42 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark">
+                    Play Previous
                   </Menu.Button>
                 </div>
                   <Menu.Items className="origin-top-right absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none overflow-y-scroll h-56">
@@ -619,15 +721,9 @@ function App() {
             <div className="flex items-center px-3">
               <button
                 type="button"
-                className="rounded px-3 py-2 mt-4 w-32 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
-                onClick={playNext}>Next
-              </button>
-            </div>
-            <div className="flex items-center px-3">
-              <button
-                type="button"
-                className="rounded px-3 py-2 mt-4 w-32 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
-                onClick={playLast}>Last
+                className="rounded px-3 py-2 mt-1 w-42 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
+                onClick={createNew}>
+                Create Challenge
               </button>
             </div>
           </div>
@@ -670,7 +766,7 @@ function App() {
               closeModal()
               streakUpdated.current = false
             }}
-            day={day}
+            day={game_id}
             currentRow={currentRow}
             cellStatuses={cellStatuses}
           />
@@ -683,12 +779,21 @@ function App() {
             colorBlindMode={colorBlindMode}
             toggleColorBlindMode={toggleColorBlindMode}
           />
+          <ChallengeInputModal
+            isOpen={challengeInputModalIsOpen}
+            handleClose={challengeInputModalCloseHandle}
+            styles={modalStyles}
+            darkMode={darkMode}
+            onSubmit={onChallengeInputSubmit}
+            colorBlindMode={colorBlindMode}
+            toggleColorBlindMode={toggleColorBlindMode}
+          />
           <Keyboard
             letterStatuses={letterStatuses}
             addLetter={addLetter}
             onEnterPress={onEnterPress}
             onDeletePress={onDeletePress}
-            gameDisabled={gameState !== state.playing}
+            gameDisabled={gameState !== state.playing && gameState !== state.creating}
             colorBlindMode={colorBlindMode}
           />
         </div>
