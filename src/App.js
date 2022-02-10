@@ -255,6 +255,7 @@ function App() {
   }
 
   const addLetter = (letter) => {
+    //window.scrollTo(0,document.body.scrollHeight)
     document.activeElement.blur()
     setSubmittedInvalidWord(false)
     setBoard((prev) => {
@@ -311,7 +312,6 @@ function App() {
   }
 
   const onEnterPress = () => {
-    window.scrollTo(0,document.body.scrollHeight)
     const word = board[currentRow].join('')
     if (!isValidWord(word)) {
       setSubmittedInvalidWord(true)
