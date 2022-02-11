@@ -1,1 +1,0 @@
-# kumarsm.github.io
