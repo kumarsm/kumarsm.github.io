@@ -675,7 +675,7 @@ function App() {
               <Settings />
             </button>
             <h1 className={"flex-1 text-center text-xl xxs:text-2xl -mr-6 sm:text-4xl tracking-wide font-bold font-og"}>
-              WORDLE CHALLENGE {game_id()} {header_symbol}
+              Wordle Challenge! {game_id()} {header_symbol}
             </h1>
             <button className="mr-6" type="button" onClick={() => setIsOpen(true)}>
               <Share />
