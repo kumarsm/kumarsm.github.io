@@ -1,1 +1,1 @@
-# kumarsm.github.io
+# Play Wordle Challenge! @ https://kumarsm.github.io
