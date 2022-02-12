@@ -391,14 +391,26 @@ function App() {
     const lastFilledRow = reversedStatuses.find((r) => {
       return r[0] !== status.unguessed
     })
+    const updateChallengeStatus = (arr, idx) => {
+      var count = Number(arr[500]);
+      for (var i=0; i < count; i++) {
+        if (Math.abs(arr[501+i]) == Math.abs(idx)) {
+          arr[501+i] = idx.toString()
+          return;
+        }
+      }
+      arr[501 + count] = idx.toString()
+      arr[500] = (count + 1).toString()
+    }
 
     if (lastFilledRow && isRowAllGreen(lastFilledRow)) {
       setGameState(state.won)
       var newGameStateList = JSON.parse(localStorage.getItem('gameStateList'))
       var count = Number(newGameStateList[500]);
       if (day < 0) {
-        newGameStateList[501+count] = wordIndex.toString();
-        newGameStateList[500] = (count+1).toString();
+        //newGameStateList[501+count] = wordIndex.toString();
+        //newGameStateList[500] = (count+1).toString();
+        updateChallengeStatus(newGameStateList, wordIndex);
       } else {
         newGameStateList[day-1] = state.won
       }
@@ -407,8 +419,9 @@ function App() {
       setGameState(state.lost)
       var newGameStateList = JSON.parse(localStorage.getItem('gameStateList'))
       if (day < 0) {
-        newGameStateList[501+count] = (wordIndex*(-1)).toString();
-        newGameStateList[500] = (count+1).toString();
+        //newGameStateList[501+count] = (wordIndex*(-1)).toString();
+        //newGameStateList[500] = (count+1).toString();
+        updateChallengeStatus(newGameStateList, (wordIndex*-1));
       } else {
         newGameStateList[day-1] = state.lost
       }
@@ -515,7 +528,21 @@ function App() {
     }
   }
 
-  var header_symbol = (tempGameStateList[day-1] == 'won') ? ('✔') : ((tempGameStateList[day-1] == 'lost') ? ('✘') : '')
+  if ( day > 0) {
+    var header_symbol = (tempGameStateList[day-1] == 'won') ? ('✔') : ((tempGameStateList[day-1] == 'lost') ? ('✘') : '')
+  } else {
+    var count = Number(tempGameStateList[500])
+    var header_symbol = ""
+    for (var i = 0; i < count; i++) {
+      if (Math.abs(tempGameStateList[501+i]) == wordIndex) {
+        if (Number(tempGameStateList[501+i]) > 0) {
+          header_symbol = '✔'
+        } else {
+          header_symbol = '✘'
+        }
+      }
+    }
+  }
 
   var elements = items_list.map(i => {
     return (
