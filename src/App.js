@@ -116,10 +116,7 @@ var day = -1;
 var wordIndex = -1;
 const og_day = getOGDay()
 setDay(getDay(og_day));
-var items_list = []
-for (var i=1;i<=og_day;i++) {
-  items_list.push(i)
-}
+
 
 function App() {
 
@@ -540,10 +537,18 @@ function App() {
         } else {
           header_symbol = '✘'
         }
+        break
       }
     }
   }
 
+  var items_list = []
+  for (var j = 0; j < Number(tempGameStateList[500]); j++) {
+    items_list.push(501 + j);
+  }
+  for (var i = 1; i <= og_day; i++) {
+    items_list.push(i)
+  }
   var elements = items_list.map(i => {
     return (
       <Menu.Item key={i}>
@@ -552,7 +557,10 @@ function App() {
             <a onMouseDown={() => playDay(i)} className=
               {
                 classNames(active ? 'font-bold text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm '+tempGameStateList[i-1])
-              }>{i+((tempGameStateList[i-1] == state.won) ? ' ✔' : ((tempGameStateList[i-1] == state.lost) ? ' ✘' : ''))}
+              }>{(i < 500 ? 'Day '+i : 'Challenge '+Math.abs(tempGameStateList[i]).toString())
+                +(i < 500? (tempGameStateList[i-1] == state.won) ? ' ✔' : ((tempGameStateList[i-1] == state.lost) ? ' ✘' : ''):
+                           (tempGameStateList[i] > 0 ? ' ✔' : ' ✘'))
+              }
             </a>
           )
         }
@@ -724,7 +732,7 @@ function App() {
               <Menu as="div" className="relative inline-block text-left">
                 <div>
                   <Menu.Button className="blurthis rounded px-3 py-2 mt-1 w-42 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark">
-                    Play Previous
+                    Previous Daily
                   </Menu.Button>
                 </div>
                   <Menu.Items className="origin-top-right absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none overflow-y-scroll h-56">
