@@ -732,7 +732,7 @@ function App() {
               <Menu as="div" className="relative inline-block text-left">
                 <div>
                   <Menu.Button className="blurthis rounded px-3 py-2 mt-1 w-42 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark">
-                    Previous Daily
+                    Play Previous
                   </Menu.Button>
                 </div>
                   <Menu.Items className="origin-top-right absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none overflow-y-scroll h-56">
