@@ -13,7 +13,9 @@ export const SettingsModal = ({
   colorBlindMode, 
   toggleColorBlindMode,
   challengeDifficulty,
-  setChallengeDifficulty
+  setChallengeDifficulty,
+  challengePlayInStrict,
+  toggleChallengePlayInStrict
   }) => {
   
   const getChallengeDifficultyLevelHelp = () => {
@@ -22,6 +24,11 @@ export const SettingsModal = ({
     } else {
       return 'Any valid word'
     }
+  }
+
+  const  strictModeHelp = () => {
+    if (challengePlayInStrict) return "Guesses must use all hints given"
+    return ""
   }
 
   return (
@@ -62,7 +69,7 @@ export const SettingsModal = ({
                 />
               </Switch>
               <Switch.Label as="span" className="ml-3 cursor-pointer">
-                Dark Mode
+                <b>Dark Mode</b>
               </Switch.Label>
             </Switch.Group>
 
@@ -84,12 +91,12 @@ export const SettingsModal = ({
                 />
               </Switch>
               <Switch.Label as="span" className="ml-3 cursor-pointer">
-                Color Blind Mode
+                <b>Color Blind Mode</b>
               </Switch.Label>
             </Switch.Group>
 
-            <RadioGroup value={challengeDifficulty} onChange={setChallengeDifficulty} className="mt-6">
-              <RadioGroup.Label className="w-full text-center">Challenge Difficulty Level</RadioGroup.Label>
+            <RadioGroup value={challengeDifficulty} onChange={setChallengeDifficulty} className="mt-8">
+              <RadioGroup.Label className="w-full text-center"><b>Challenge Difficulty Level</b></RadioGroup.Label>
               <div className="grid grid-cols-2 gap-2 rounded-full mt-2 p-1 nm-inset-background dark:nm-inset-background-dark">
                 {Object.keys(challengeDifficultyLevel).map((option) => (
                   <RadioGroup.Option
@@ -108,7 +115,30 @@ export const SettingsModal = ({
                 ))}
               </div>
             </RadioGroup>
-            <p className="text-center w-10/12 mx-auto font-medium">{getChallengeDifficultyLevelHelp()}</p>
+            <p className="text-center w-10/12 mx-auto cursor-pointer">{getChallengeDifficultyLevelHelp()}</p>
+
+
+            <Switch.Group as="div" className="flex items-center mt-8">
+              <Switch
+                checked={challengePlayInStrict}
+                onChange={toggleChallengePlayInStrict}
+                className={`${challengePlayInStrict
+                    ? 'nm-inset-yellow-500'
+                    : 'nm-inset-background'
+                  } ${darkMode ? 'border-background-dark' : ''} relative inline-flex flex-shrink-0 h-8 w-14 p-1 border-2 rounded-full cursor-pointer transition ease-in-out duration-200`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`${challengePlayInStrict ? 'translate-x-[1.55rem]' : 'translate-x-0'
+                    } absolute pointer-events-none inline-block top-1/2 -translate-y-1/2 h-5 w-5 shadow rounded-full bg-white transform ring-0 transition ease-in-out duration-200`}
+                />
+              </Switch>
+              <Switch.Label as="span" className="ml-3 cursor-pointer">
+                <b>Strict Mode Play</b>
+              </Switch.Label>
+            </Switch.Group>
+            <p className="text-center w-10/12 mx-auto cursor-pointer">{strictModeHelp()}</p>
+
           </div>
         </div>
       </div>

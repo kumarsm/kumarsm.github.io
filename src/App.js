@@ -168,7 +168,7 @@ function App() {
   const [settingsModalIsOpen, setSettingsModalIsOpen] = useState(false)
   const [challengeInputModalIsOpen, setChallengeInputModalIsOpen] = useState(false)
   const [challengeDifficulty, setChallengeDifficulty] = useLocalStorage('challengeDifficulty', challengeDifficultyLevel.normal)
-
+  
 
   const openModal = () => setIsOpen(true)
   const closeModal = () => setIsOpen(false)
@@ -186,6 +186,13 @@ function App() {
   const toggleColorBlindMode = () => {
     setColorblindMode((prev) => !prev)
   }
+
+  const [challengePlayInStrict, setChallengePlayInStrict] = useLocalStorage('challengePlayInStrict', true)
+  const toggleChallengePlayInStrict = () => {
+    setChallengePlayInStrict((prev) => !prev)
+  }
+
+  const [exactGuesses, setExactGuesses] = useLocalStorage('exact-guesses', {})
 
   useEffect(() => {
     if (gameState == state.won || gameState == state.lost || gameState == state.created) {
@@ -281,6 +288,7 @@ function App() {
     setCurrentRow(initialStates.currentRow)
     setCurrentCol(initialStates.currentCol)
     setSubmittedInvalidWord(false)
+    setExactGuesses({})
     const newBoard = [
       ['', '', '', '', ''],
     ];
@@ -317,7 +325,16 @@ function App() {
       if (challengeDifficulty == challengeDifficultyLevel.hard) return true;
       else return wordle_answers.indexOf(word.toLowerCase()) >= 0
     }
-    return true;
+    if (!challengePlayInStrict) return true;
+    const guessedLetters = Object.entries(letterStatuses).filter(([letter, letterStatus]) =>
+      [status.yellow, status.green].includes(letterStatus)
+    )
+    const yellowsUsed = guessedLetters.every(([letter, _]) => word.includes(letter))
+    const greensUsed = Object.entries(exactGuesses).every(
+      ([position, letter]) => word[parseInt(position)] === letter
+    )
+    if (!yellowsUsed || !greensUsed) return false
+    return true
   }
 
   const onEnterPress = () => {
@@ -357,6 +374,7 @@ function App() {
   }
 
   const updateCellStatuses = (word, rowNumber) => {
+    const fixedLetters = {}
     setCellStatuses((prev) => {
       const newCellStatuses = [...prev]
       newCellStatuses[rowNumber] = [...prev[rowNumber]]
@@ -373,6 +391,7 @@ function App() {
         if (word[i] === answer[i]) {
           newCellStatuses[rowNumber][i] = status.green
           answerLetters.splice(i, 1)
+          fixedLetters[i] = answer[i]
         }
       }
 
@@ -386,6 +405,7 @@ function App() {
 
       return newCellStatuses
     })
+    setExactGuesses((prev) => ({ ...prev, ...fixedLetters }))
   }
 
   const isRowAllGreen = (row) => {
@@ -496,6 +516,7 @@ function App() {
     setCurrentRow(initialStates.currentRow)
     setCurrentCol(initialStates.currentCol)
     setLetterStatuses(initialStates.letterStatuses)
+    setExactGuesses({})
   }
   const playFirst = () => playDay(1)
   const playPrevious = () => playDay(day - 1)
@@ -693,6 +714,8 @@ function App() {
             toggleColorBlindMode={toggleColorBlindMode}
             challengeDifficulty={challengeDifficulty}
             setChallengeDifficulty={setChallengeDifficulty}
+            challengePlayInStrict={challengePlayInStrict}
+            toggleChallengePlayInStrict={toggleChallengePlayInStrict}
           />          
           <ChallengeInputModal
             isOpen={challengeInputModalIsOpen}
@@ -829,6 +852,9 @@ function App() {
             toggleColorBlindMode={toggleColorBlindMode}
             challengeDifficulty={challengeDifficulty}
             setChallengeDifficulty={setChallengeDifficulty}
+            challengePlayInStrict={challengePlayInStrict}
+            toggleChallengePlayInStrict={toggleChallengePlayInStrict}
+
           />
           <ChallengeInputModal
             isOpen={challengeInputModalIsOpen}
