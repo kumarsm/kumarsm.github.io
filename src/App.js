@@ -14,6 +14,11 @@ import { EndGameModal } from './components/EndGameModal'
 import { ChallengeInputModal } from './components/ChallengeInputModal'
 import { Menu, Transition } from '@headlessui/react'
 
+export const challengeDifficultyLevel = {
+  normal: 'wordle',
+  hard: 'any'
+}
+
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
@@ -162,6 +167,7 @@ function App() {
   const [infoModalIsOpen, setInfoModalIsOpen] = useState(firstTime)
   const [settingsModalIsOpen, setSettingsModalIsOpen] = useState(false)
   const [challengeInputModalIsOpen, setChallengeInputModalIsOpen] = useState(false)
+  const [challengeDifficulty, setChallengeDifficulty] = useLocalStorage('challengeDifficulty', challengeDifficultyLevel.normal)
 
 
   const openModal = () => setIsOpen(true)
@@ -305,7 +311,13 @@ function App() {
 
   const isValidWord = (word) => {
     if (word.length < 5) return false
-    return (new_words.indexOf(word.toLowerCase()) >= 0)
+    var validWord = new_words.indexOf(word.toLowerCase()) >= 0
+    if (!validWord) return false;
+    if (gameState == state.creating) {
+      if (challengeDifficulty == challengeDifficultyLevel.hard) return true;
+      else return wordle_answers.indexOf(word.toLowerCase()) >= 0
+    }
+    return true;
   }
 
   const onEnterPress = () => {
@@ -679,6 +691,8 @@ function App() {
             toggleDarkMode={toggleDarkMode}
             colorBlindMode={colorBlindMode}
             toggleColorBlindMode={toggleColorBlindMode}
+            challengeDifficulty={challengeDifficulty}
+            setChallengeDifficulty={setChallengeDifficulty}
           />          
           <ChallengeInputModal
             isOpen={challengeInputModalIsOpen}
@@ -813,6 +827,8 @@ function App() {
             toggleDarkMode={toggleDarkMode}
             colorBlindMode={colorBlindMode}
             toggleColorBlindMode={toggleColorBlindMode}
+            challengeDifficulty={challengeDifficulty}
+            setChallengeDifficulty={setChallengeDifficulty}
           />
           <ChallengeInputModal
             isOpen={challengeInputModalIsOpen}

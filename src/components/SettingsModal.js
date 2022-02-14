@@ -1,10 +1,29 @@
 import { ReactComponent as Close } from '../data/Close.svg'
 import Modal from 'react-modal'
-import { Switch } from '@headlessui/react'
-
+import { RadioGroup, Switch } from '@headlessui/react'
+import { challengeDifficultyLevel } from '../App'
 Modal.setAppElement('#root')
 
-export const SettingsModal = ({ isOpen, handleClose, styles, darkMode, toggleDarkMode, colorBlindMode, toggleColorBlindMode}) => {
+export const SettingsModal = ({ 
+  isOpen, 
+  handleClose, 
+  styles, 
+  darkMode, 
+  toggleDarkMode, 
+  colorBlindMode, 
+  toggleColorBlindMode,
+  challengeDifficulty,
+  setChallengeDifficulty
+  }) => {
+  
+  const getChallengeDifficultyLevelHelp = () => {
+    if (challengeDifficulty === challengeDifficultyLevel.normal) {
+      return "Typical Wordle"
+    } else {
+      return 'Any valid word'
+    }
+  }
+
   return (
     <Modal
       isOpen={isOpen}
@@ -68,6 +87,28 @@ export const SettingsModal = ({ isOpen, handleClose, styles, darkMode, toggleDar
                 Color Blind Mode
               </Switch.Label>
             </Switch.Group>
+
+            <RadioGroup value={challengeDifficulty} onChange={setChallengeDifficulty} className="mt-6">
+              <RadioGroup.Label className="w-full text-center">Challenge Difficulty Level</RadioGroup.Label>
+              <div className="grid grid-cols-2 gap-2 rounded-full mt-2 p-1 nm-inset-background dark:nm-inset-background-dark">
+                {Object.keys(challengeDifficultyLevel).map((option) => (
+                  <RadioGroup.Option
+                    key={option}
+                    value={challengeDifficultyLevel[option]}
+                    className={({ checked }) =>
+                      `text-primary dark:text-primary-dark ${checked
+                        ? 'bg-white dark:text-primary'
+                        : 'hover:nm-inset-background-sm dark:hover:nm-inset-background-dark-sm'
+                      }
+                        rounded-full py-2 px-3 flex items-center justify-center text-sm font-bold uppercase sm:flex-1 cursor-pointer`
+                    }
+                  >
+                    <RadioGroup.Label as="p">{option}</RadioGroup.Label>
+                  </RadioGroup.Option>
+                ))}
+              </div>
+            </RadioGroup>
+            <p className="text-center w-10/12 mx-auto font-medium">{getChallengeDifficultyLevelHelp()}</p>
           </div>
         </div>
       </div>
