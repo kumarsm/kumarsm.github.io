@@ -192,7 +192,8 @@ function App() {
     setChallengePlayInStrict((prev) => !prev)
   }
 
-  const [exactGuesses, setExactGuesses] = useLocalStorage('exact-guesses', {})
+  //const [exactGuesses, setExactGuesses] = useLocalStorage('exact-guesses', {})
+  const [exactGuesses, setExactGuesses] = useState({})
 
   useEffect(() => {
     if (gameState == state.won || gameState == state.lost || gameState == state.created) {
@@ -320,7 +321,7 @@ function App() {
   const isValidWord = (word) => {
     if (word.length < 5) return false
     var validWord = new_words.indexOf(word.toLowerCase()) >= 0
-    if (!validWord) return false;
+    if (!validWord) return false
     if (gameState == state.creating) {
       if (challengeDifficulty == challengeDifficultyLevel.hard) return true;
       else return wordle_answers.indexOf(word.toLowerCase()) >= 0
