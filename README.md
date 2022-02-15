@@ -1,14 +1,14 @@
-# Wordle Archive
+# Introduction
 
-🔗 https://www.devangthakkar.com/wordle_archive/
+History: [Wordle](https://www.powerlanguage.co.uk/wordle/) by [Josh Wardle](https://twitter.com/powerlanguish) is a most popular once-a-day word guessing game. Wordle Archive built on top of [Word Master](https://octokatherine.github.io/word-master/) created by [Katherine Peterson](https://twitter.com/katherinecodes), is simply a remembrance of wordles past. It enables you to play Wordles that you may have missed.
 
-An archive for [Wordle](https://www.powerlanguage.co.uk/wordle/) by [Josh Wardle](https://twitter.com/powerlanguish) and built on top of [Word Master](https://octokatherine.github.io/word-master/) created by [Katherine Peterson](https://twitter.com/katherinecodes), Wordle Archive is ... simply a remembrance of wordles past. I created this because I wanted to go back to Wordles that I had missed.
+## Wordle Challenge
 
-## How did I do it?
+🔗 https://wordlechallenge.karkid.me/
 
-This project would not have been possible without [Selenium](https://github.com/SeleniumHQ/selenium). I figured out that if I changed my computer time to a previous date, I could trick Wordle into allowing me to access the Wordle for the day. I used Selenium to go back in time and obtain answers, but I have since been told the answers were already in the correct order in the original source code. I have the answers in plain text in the source code as well because I don't care, especially since there are many ways to cheat already.
+Wordle Challenge is built on top of [Wordle Archive](https://www.devangthakkar.com/wordle_archive/) and [Word Master](https://octokatherine.github.io/word-master/) it takes Wordle to a step further.  Wordle Challenge enables you to create own wordle puzzles to challenge friends and family.  Choose from wordle recommended 5-letter word repertoire (Normal) or any valid 5-letter word (Hard).  Strict mode play is enabled by default that can be toggled in Settings.
 
-## Rules
+## Wordle Game Rules
 
 You have 6 guesses to guess the correct word.
 Each guess can be any valid word.
@@ -19,8 +19,7 @@ After submitting a guess, the letters will turn gray, green, or yellow.
 - Yellow: The letter is correct, but in the wrong position.
 - Gray: The letter is incorrect.
 
-## Contributing
+## Questions or Issues
 
 Feel free to open an issue for any bugs or feature requests.
 
-To contribute to the code, see [CONTRIBUTING.md](https://github.com/octokatherine/word-master/blob/main/CONTRIBUTING.md)
