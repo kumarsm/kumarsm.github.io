@@ -12,7 +12,7 @@ import { InfoModal } from './components/InfoModal'
 import { SettingsModal } from './components/SettingsModal'
 import { EndGameModal } from './components/EndGameModal'
 import { ChallengeInputModal } from './components/ChallengeInputModal'
-import { Menu, Transition } from '@headlessui/react'
+import { Menu } from '@headlessui/react'
 
 export const challengeDifficultyLevel = {
   normal: 'wordle',
@@ -116,6 +116,110 @@ const getOGDay = () => {
   return diffDays
 }
 
+const getCurrentChallengeState = (gameStateList) => {
+  for (let i = 0; i < Number(gameStateList[500]); i++) {
+    const challengeState = gameStateList[501+i]
+    if (challengeState.wordIndex === wordIndex) return challengeState
+  }
+}
+const getIsSavedSolution = () => {
+  const gameStateList = JSON.parse(localStorage.getItem('gameStateList'))
+
+  if (gameStateList) {
+    if (day >0) {
+      const dayState = gameStateList[day-1]
+      return dayState && dayState.state === state.won && dayState.board !== null
+    } else {
+      const challengeState = getCurrentChallengeState(gameStateList)
+      return challengeState && challengeState.state == state.won && challengeState.board != null
+    }
+  }
+
+  return false;
+}
+
+const getIsClearedSolution = (idx) => {
+  const gameStateList = JSON.parse(localStorage.getItem('gameStateList'))
+
+  if (gameStateList) {
+    const dayState = gameStateList[idx-1]
+    return dayState?.state === state.won && dayState?.board === null
+  }
+
+  return false;
+}
+
+const calculateScore = (idx_) => {
+  const gameStateList = JSON.parse(localStorage.getItem('gameStateList'))
+
+  if (gameStateList) {
+    const dayState = gameStateList[idx_-1];
+    const board = dayState?.board;
+
+    // puzzle was solved before we tracked board state in
+    // local storage. we'll still show the solved puzzle
+    // (on first row) but don't show score since its unknown
+    if (dayState?.scoreUnknown) {
+      return '';
+    }
+
+    const numGuesses = board
+      ? board
+        .flatMap(row => row.join('') ? 1 : 0)
+        .reduce((acc, curr) => acc + curr, 0)
+      : null;
+
+    return numGuesses ? `${numGuesses}/6` : '';
+  }
+
+  return '';
+}
+
+// check if gameStateList is old gameStateList shape (array of strings) and
+// update to new shape (array of objects w/ state and board). if a user has
+// solved a puzzle before this feature was implemented we will show the answer
+// on the first row since we don't know how many guesses they took to win
+const oneTimeGameStateListUpdate = (stringGameStateList) => {
+    var count = 0;
+  const objectGameStateList = stringGameStateList.map((gameState, idx) => {
+      if ( idx < 500 ) {
+        if (gameState === state.won) {
+          return {
+            state: state.won,
+            scoreUnknown: true,
+            board: new Array(6)
+              .fill(wordle_answers[idx].toUpperCase().split(''), 0, 1)
+              .fill(new Array(5).fill(''), 1)
+          }
+        }
+        return {
+          state: gameState,
+          board: null
+        }
+      } else if ( idx == 500 ){
+        count = Number (gameState)
+      } else {
+        if ( idx > 500 + count ) return
+        if (typeof(gameState) === 'string') {
+          var oldIndex = gameState
+          return {
+            state: oldIndex > 0? state.won : state.lost,
+            scoreUnknown: oldIndex > 0? true : null,
+            wordIndex: Math.abs(oldIndex),
+            board: oldIndex < 0? null : new Array(6)
+              .fill(new_words[Math.abs(oldIndex)].toUpperCase().split(''), 0, 1)
+              .fill(new Array(5).fill(''), 1)
+          }
+        }
+      }
+    }
+  );
+  if (count > 0) {
+    objectGameStateList[500] = count.toString();
+  }
+  localStorage.setItem('gameStateList', JSON.stringify(objectGameStateList));
+}
+
 const wordle_answers = ["rebut", "sissy", "humph", "awake", "blush", "focal", "evade", "naval", "serve", "heath", "dwarf", "model", "karma", "stink", "grade", "quiet", "bench", "abate", "feign", "major", "death", "fresh", "crust", "stool", "colon", "abase", "marry", "react", "batty", "pride", "floss", "helix", "croak", "staff", "paper", "unfed", "whelp", "trawl", "outdo", "adobe", "crazy", "sower", "repay", "digit", "crate", "cluck", "spike", "mimic", "pound", "maxim", "linen", "unmet", "flesh", "booby", "forth", "first", "stand", "belly", "ivory", "seedy", "print", "yearn", "drain", "bribe", "stout", "panel", "crass", "flume", "offal", "agree", "error", "swirl", "argue", "bleed", "delta", "flick", "totem", "wooer", "front", "shrub", "parry", "biome", "lapel", "start", "greet", "goner", "golem", "lusty", "loopy", "round", "audit", "lying", "gamma", "labor", "islet", "civic", "forge", "corny", "moult", "basic", "salad", "agate", "spicy", "spray", "essay", "fjord", "spend", "kebab", "guild", "aback", "motor", "alone", "hatch", "hyper", "thumb", "dowry", "ought", "belch", "dutch", "pilot", "tweed", "comet", "jaunt", "enema", "steed", "abyss", "growl", "fling", "dozen", "boozy", "erode", "world", "gouge", "click", "briar", "great", "altar", "pulpy", "blurt", "coast", "duchy", "groin", "fixer", "group", "rogue", "badly", "smart", "pithy", "gaudy", "chill", "heron", "vodka", "finer", "surer", "radio", "rouge", "perch", "retch", "wrote", "clock", "tilde", "store", "prove", "bring", "solve", "cheat", "grime", "exult", "usher", "epoch", "triad", "break", "rhino", "viral", "conic", "masse", "sonic", "vital", "trace", "using", "peach", "champ", "baton", "brake", "pluck", "craze", "gripe", "weary", "picky", "acute", "ferry", "aside", "tapir", "troll", "unify", "rebus", "boost", "truss", "siege", "tiger", "banal", "slump", "crank", "gorge", "query", "drink", "favor", "abbey", "tangy", "panic", "solar", "shire", "proxy", "point", "robot", "prick", "wince", "crimp", "knoll", "sugar", "whack", "mount", "perky", "could", "wrung", "light", "those", "moist", "shard", "pleat", "aloft", "skill", "elder", "frame", "humor", "pause", "ulcer", "ultra", "robin", "cynic", "aroma", "caulk", "shake", "dodge", "swill", "tacit", "other", "thorn", "trove", "bloke", "vivid", "spill", "chant", "choke", "rupee", "nasty", "mourn", "ahead", "brine", "cloth", "hoard", "sweet", "month", "lapse", "watch", "today", "focus", "smelt", "tease", "cater", "movie", "saute", "allow", "renew", "their", "slosh", "purge", "chest", "depot", "epoxy", "nymph", "found", "shall", "harry", "stove", "lowly", "snout", "trope", "fewer", "shawl", "natal", "comma", "foray", "scare", "stair", "black", "squad", "royal", "chunk", "mince", "shame", "cheek", "ample", "flair", "foyer", "cargo", "oxide", "plant", "olive", "inert", "askew", "heist", "shown", "zesty", "hasty", "trash", "fella", "larva", "forgo", "story", "hairy", "train", "homer", "badge", "midst", "canny", "fetus", "butch", "farce", "slung", "tipsy", "metal", "yield", "delve", "being", "scour", "glass", "gamer", "scrap", "money", "hinge", "album", "vouch", "asset", "tiara", "crept", "bayou", "atoll", "manor", "creak", "showy", "phase", "froth", "depth", "gloom", "flood", "trait", "girth", "piety", "payer", "goose", "float", "donor", "atone", "primo", "apron", "blown", "cacao", "loser", "input", "gloat", "awful", "brink", "smite", "beady", "rusty", "retro", "droll", "gawky", "hutch", "pinto", "gaily", "egret", "lilac", "sever", "field", "fluff", "hydro", "flack", "agape", "voice", "stead", "stalk", "berth", "madam", "night", "bland", "liver", "wedge", "augur", "roomy", "wacky", "flock", "angry", "bobby", "trite", "aphid", "tryst", "midge", "power", "elope", "cinch", "motto", "stomp", "upset", "bluff", "cramp", "quart", "coyly", "youth", "rhyme", "buggy", "alien", "smear", "unfit", "patty", "cling", "glean", "label", "hunky", "khaki", "poker", "gruel", "twice", "twang", "shrug", "treat", "unlit", "waste", "merit", "woven", "octal", "needy", "clown", "widow", "irony", "ruder", "gauze", "chief", "onset", "prize", "fungi", "charm", "gully", "inter", "whoop", "taunt", "leery", "class", "theme", "lofty", "tibia", "booze", "alpha", "thyme", "eclat", "doubt", "parer", "chute", "stick", "trice", "alike", "sooth", "recap", "saint", "liege", "glory", "grate", "admit", "brisk", "soggy", "usurp", "scald", "scorn", "leave", "twine", "sting", "bough", "marsh", "sloth", "dandy", "vigor", "howdy", "enjoy"]
 var day = -1;
 var wordIndex = -1;
@@ -152,7 +256,6 @@ function App() {
 
   const [answer, setAnswer] = useState(initialStates.answer)
   const [gameState, setGameState] = useState(initialStates.gameState)
-  const [gameStateList, setGameStateList] = useLocalStorage('gameStateList', Array(800).fill('0'))
   const [board, setBoard] = useState(initialStates.board)
   const [cellStatuses, setCellStatuses] = useState(initialStates.cellStatuses)
   const [currentRow, setCurrentRow] = useState(initialStates.currentRow)
@@ -168,10 +271,21 @@ function App() {
   const [settingsModalIsOpen, setSettingsModalIsOpen] = useState(false)
   const [challengeInputModalIsOpen, setChallengeInputModalIsOpen] = useState(false)
   const [challengeDifficulty, setChallengeDifficulty] = useLocalStorage('challengeDifficulty', challengeDifficultyLevel.normal)
-  
+  const [isSavedSolution, setIsSavedSolution] = useState(getIsSavedSolution())
 
+  const [gameStateList, setGameStateList] = useLocalStorage(
+    'gameStateList',
+    () => {
+      var x = Array(800).fill({ state: 'none', board: null, wordIndex: -1})
+      x[500] = '0'
+      return x
+    }
+  )
+  
   const openModal = () => setIsOpen(true)
-  const closeModal = () => setIsOpen(false)
+  const closeModal = () => {
+    setIsOpen(false)
+  }
   const handleInfoClose = () => {
     setFirstTime(false)
     setInfoModalIsOpen(false)
@@ -197,11 +311,13 @@ function App() {
 
   useEffect(() => {
     if (gameState == state.won || gameState == state.lost || gameState == state.created) {
-      setTimeout(() => {
-        openModal()
-      }, 500)
+      if (!isSavedSolution) {
+        setTimeout(() => {
+          openModal()
+        }, 500)
+      }
     }
-  }, [gameState])
+  }, [gameState, isSavedSolution])
 
   useEffect(() => {
     if (!streakUpdated.current) {
@@ -219,9 +335,21 @@ function App() {
   }, [gameState, currentStreak, longestStreak, setLongestStreak, setCurrentStreak])
 
   useEffect(() => {
-    if (localStorage.getItem('gameStateList') == null) {
+    const jsonGameStateList = localStorage.getItem('gameStateList');
+    if (jsonGameStateList == null) {
       setGameStateList(gameStateList)
+    } else {
+      const gameStateList = JSON.parse(jsonGameStateList);
+
+      // address regression impact of gameStateList change
+      // see oneTimeGameStateListUpdate for more info on this
+      if (typeof gameStateList[0] === 'string' || typeof gameStateList[501] === 'string') {
+        oneTimeGameStateListUpdate(gameStateList);
+      }
     }
+
+    // set to a blank board or the board from a past win
+    setInitialGameState();
   }, [])
 
   useEffect(() => {
@@ -233,8 +361,67 @@ function App() {
     }
   }, [og_day])
 
+  // update letter and cell statuses each time we move onto a
+  // new row and when we switch to a puzzle with a saved solution
+  useEffect(() => {
+    const isGameOver = currentRow === 6;
+    const isEnterPressOrSavedGame = currentRow !== 6 && currentCol === 0 && (
+      board[currentRow][currentCol] === '' || isSavedSolution
+    );
+
+    if (isGameOver || isEnterPressOrSavedGame) {
+      board.forEach((row, idx) => {
+        const word = row.join('')
+
+        if (word) {
+          updateLetterStatuses(word)
+          updateCellStatuses(word, idx)
+        }
+      })
+    }
+  }, [currentCol, currentRow, board])
+
+  const setInitialGameState = () => {
+    const gameStateList = JSON.parse(localStorage.getItem('gameStateList'))
+
+    setAnswer(initialStates.answer)
+    setCurrentRow(initialStates.currentRow)
+    setCurrentCol(initialStates.currentCol)
+    setCellStatuses(initialStates.cellStatuses)
+    setLetterStatuses(initialStates.letterStatuses)
+    setExactGuesses({})
+
+    if (gameStateList && getIsSavedSolution()) {
+      setIsSavedSolution(true)
+      setGameState(state.won)
+      if (day > 0) {
+        setBoard(gameStateList[day-1].board)
+      }
+      else {
+        const challengeState = getCurrentChallengeState(gameStateList)
+        setBoard(challengeState.board)
+      } 
+    } else {
+      setIsSavedSolution(false)
+      setBoard(initialStates.board)
+      setGameState(initialStates.gameState)
+    }
+  }
+
+  const clearSolution = () => {
+    const newGameStateList = JSON.parse(localStorage.getItem('gameStateList'))
+    if ( day > 0 ) {
+      newGameStateList[day-1].board = null;
+    } else {
+      const challengeState = getCurrentChallengeState(newGameStateList)
+      challengeState.board = null;
+    }
+    localStorage.setItem("gameStateList", JSON.stringify(newGameStateList))
+    setInitialGameState();
+  }
+
   const getCellStyles = (rowNumber, colNumber, letter) => {
-    if (rowNumber === currentRow) {
+    if (rowNumber === currentRow && !isSavedSolution) {
       if (letter) {
         return `nm-inset-background dark:nm-inset-background-dark text-primary dark:text-primary-dark ${
           submittedInvalidWord ? 'border border-red-800' : ''
@@ -281,7 +468,7 @@ function App() {
       setCurrentCol((prev) => prev + 1)
     }
   }
-  const createNew = () => {
+  const createNewChallenge = () => {
     console.log('creating new challenge')
     setCellStatuses(initialStates.cellStatuses)
     setLetterStatuses(initialStates.letterStatuses)
@@ -355,8 +542,6 @@ function App() {
 
     if (currentRow === 6) return
     
-    updateCellStatuses(word, currentRow)
-    updateLetterStatuses(word)
     setCurrentRow((prev) => prev + 1)
     setCurrentCol(0)
   }
@@ -421,39 +606,50 @@ function App() {
     const lastFilledRow = reversedStatuses.find((r) => {
       return r[0] !== status.unguessed
     })
-    const updateChallengeStatus = (arr, idx) => {
-      var count = Number(arr[500]);
+
+    const updateChallengeStatus = (arr, game_state) => {
+      const count = Number(arr[500]);
+      var challengeState;
+
       for (var i=0; i < count; i++) {
-        if (Math.abs(arr[501+i]) == Math.abs(idx)) {
-          arr[501+i] = idx.toString()
+        challengeState = arr[501+i];
+        if (challengeState.wordIndex == wordIndex) {
+          challengeState.state = game_state
+          challengeState.board = board
+          challengeState.scoreUnknown = false
           return;
         }
       }
-      arr[501 + count] = idx.toString()
-      arr[500] = (count + 1).toString()
+      challengeState = arr[501+count]
+      challengeState.wordIndex = wordIndex
+      challengeState.state = game_state
+      challengeState.board = board
+      challengeState.scoreUnknown = false
+      arr[500] = (count+1).toString();
     }
 
-    if (lastFilledRow && isRowAllGreen(lastFilledRow)) {
-      setGameState(state.won)
-      var newGameStateList = JSON.parse(localStorage.getItem('gameStateList'))
-      var count = Number(newGameStateList[500]);
-      if (day < 0) {
-        //newGameStateList[501+count] = wordIndex.toString();
-        //newGameStateList[500] = (count+1).toString();
-        updateChallengeStatus(newGameStateList, wordIndex);
-      } else {
-        newGameStateList[day-1] = state.won
-      }
-      localStorage.setItem('gameStateList', JSON.stringify(newGameStateList))
-    } else if (currentRow === 6) {
-      setGameState(state.lost)
-      var newGameStateList = JSON.parse(localStorage.getItem('gameStateList'))
-      if (day < 0) {
-        //newGameStateList[501+count] = (wordIndex*(-1)).toString();
-        //newGameStateList[500] = (count+1).toString();
-        updateChallengeStatus(newGameStateList, (wordIndex*-1));
-      } else {
-        newGameStateList[day-1] = state.lost
+    // don't update game state for already won games
+    if (!isSavedSolution) {
+      const newGameStateList = JSON.parse(localStorage.getItem('gameStateList'))
+      const dayState = newGameStateList[day-1]
+      const count = Number(newGameStateList[500])
+
+      if (lastFilledRow && isRowAllGreen(lastFilledRow)) {
+        if (day < 0) {
+          updateChallengeStatus(newGameStateList, state.won);
+        } else {
+          setGameState(state.won)
+          dayState.board = board
+          dayState.state = state.won
+          dayState.scoreUnknown = false;
+        }
+      } else if (currentRow === 6) {
+        if (day < 0) {
+          updateChallengeStatus(newGameStateList, state.lost);
+        } else {
+          setGameState(state.lost)
+          dayState.state = state.lost
+        }
       }
       localStorage.setItem('gameStateList', JSON.stringify(newGameStateList))
     }
@@ -509,7 +705,7 @@ function App() {
     },
   }
 
-  const play = () => {
+  const play = () => { // TODO: remove if not used
     setAnswer(initialStates.answer)
     setGameState(initialStates.gameState)
     setBoard(initialStates.board)
@@ -519,6 +715,7 @@ function App() {
     setLetterStatuses(initialStates.letterStatuses)
     setExactGuesses({})
   }
+
   const playFirst = () => playDay(1)
   const playPrevious = () => playDay(day - 1)
   const playRandom = () => playDay(Math.floor(Math.random() * (og_day-1)) + 1)
@@ -530,7 +727,7 @@ function App() {
     var word = getDayAnswer(i);
     wordIndex = new_words.indexOf(word.toLowerCase());
     setDay(i)
-    play()
+    setInitialGameState()
   }
 
   const playIndex = (i) => {
@@ -538,7 +735,8 @@ function App() {
       wordIndex = i;
       day = -1;
       setDay(i)
-      play()
+      //play()
+      setInitialGameState()
     }
   }
 
@@ -550,32 +748,29 @@ function App() {
   for (var i=4;i<=og_day+3;i++) {
     var textNumber = document.getElementById('headlessui-menu-item-'+i)
     if(textNumber != null) {
-      if (tempGameStateList[i-1] == state.won) {
+      if (tempGameStateList[i-1].state == state.won) {
         textNumber.classList.add('green-text');
       }
-      if (tempGameStateList[i-1] == state.lost) {
+      if (tempGameStateList[i-1].state == state.lost) {
         textNumber.classList.add('red-text');
       }
     }
   }
 
-  if ( day > 0) {
-    var header_symbol = (tempGameStateList[day-1] == 'won') ? ('✔') : ((tempGameStateList[day-1] == 'lost') ? ('✘') : '')
-  } else {
-    var count = Number(tempGameStateList[500])
-    var header_symbol = ""
-    for (var i = 0; i < count; i++) {
-      if (Math.abs(tempGameStateList[501+i]) == wordIndex) {
-        if (Number(tempGameStateList[501+i]) > 0) {
-          header_symbol = '✔'
-        } else {
-          header_symbol = '✘'
+  var header_symbol = ""
+  if (gameState !== state.creating) {
+    if ( day > 0) {
+      header_symbol = (tempGameStateList[day - 1].state == 'won') ? ('✔') : ((tempGameStateList[day - 1].state == 'lost') ? ('✘') : '')
+    } else {
+      var count = Number(tempGameStateList[500])
+      for (var i = 0; i < count; i++) {
+        if (tempGameStateList[501+i].wordIndex == wordIndex) {
+          var header_symbol = (tempGameStateList[501+i].state == 'won') ? ('✔') : ((tempGameStateList[501+i].state == 'lost') ? ('✘') : '')
+          break
         }
-        break
       }
     }
   }
-
   var items_list = []
   for (var j = 0; j < Number(tempGameStateList[500]); j++) {
     items_list.push(501 + j);
@@ -588,14 +783,20 @@ function App() {
       <Menu.Item key={i}>
         {({ active }) =>
           (
-            <a onMouseDown={() => playDay(i)} className=
-              {
-                classNames(active ? 'font-bold text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm '+tempGameStateList[i-1])
-              }>{(i < 500 ? 'Day '+i : 'Challenge '+Math.abs(tempGameStateList[i]).toString())
-                +(i < 500? (tempGameStateList[i-1] == state.won) ? ' ✔' : ((tempGameStateList[i-1] == state.lost) ? ' ✘' : ''):
-                           (tempGameStateList[i] > 0 ? ' ✔' : ' ✘'))
-              }
-            </a>
+          <button onClick={() => i < 500 ? playDay(i) : playIndex(tempGameStateList[i].wordIndex)} className={classNames(
+              tempGameStateList[i<500?i-1:i].state,
+              getIsClearedSolution(i<500?i:i+1) ? "cleared" : "",
+              active ? 'font-bold text-gray-900' : 'text-gray-700',
+              'flex justify-between block px-4 py-2 text-sm w-full',
+            )}>
+                <span>
+                  {(i < 500 ? 'Day '+i : '#'+tempGameStateList[i].wordIndex)
+                  +(tempGameStateList[i<500?i-1:i].state == state.won ? ' ✔' : tempGameStateList[i<500?i-1:i].state == state.lost ? ' ✘' : '')}
+                </span>
+                <span>
+                  {calculateScore(i<500?i:i+1)}
+                </span>
+            </button>
           )
         }
       </Menu.Item>
@@ -603,6 +804,7 @@ function App() {
   });
 
   var game_id = () => {
+    if (gameState == state.creating) return ""
     return wordIndex.toString()+(day>0?' (Day '+day.toString()+')':'')
   }
   if (darkMode == true) {
@@ -658,7 +860,7 @@ function App() {
               <button
                 type="button"
                 className="rounded px-2 py-2 w-24 text-sm nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
-                onClick={createNew}>Create Challenge
+                onClick={createNewChallenge}>Create Challenge
               </button>
             </div>
           </div>
@@ -728,6 +930,8 @@ function App() {
             toggleColorBlindMode={toggleColorBlindMode}
           />
           <Keyboard
+            isSolved={gameState === state.won}
+            onClear={clearSolution}
             letterStatuses={letterStatuses}
             addLetter={addLetter}
             onEnterPress={onEnterPress}
@@ -743,11 +947,11 @@ function App() {
     return (
       <div className={darkMode ? 'dark h-fill' : 'h-fill'}>
         <div className={`flex flex-col justify-between h-fill bg-background dark:bg-background-dark`}>
-          <header className="flex items-center py-2 px-3 text-primary dark:text-primary-dark">
+          <header className="flex items-center px-3 text-primary dark:text-primary-dark">
             <button type="button" onClick={() => setSettingsModalIsOpen(true)}>
               <Settings />
             </button>
-            <h1 className={"flex-1 text-center text-xl xxs:text-2xl -mr-6 sm:text-4xl tracking-wide font-bold font-og"}>
+            <h1 className={"flex-1 text-center text-xl xxs:text-2xl -mr-6 sm:text-3xl tracking-wide font-bold font-og"}>
               Wordle Challenge! {game_id()} {header_symbol}
             </h1>
             <button className="mr-6" type="button" onClick={() => setIsOpen(true)}>
@@ -757,8 +961,8 @@ function App() {
               <Info />
             </button>
           </header>
-          <div className="flex flex-force-center items-center py-3">
-            <div className="flex items-center px-3">
+          <div className="flex flex-force-center items-center py-1">
+            <div className="flex items-center px-1">
               <button
                 type="button"
                 className="rounded px-3 py-2 mt-1 w-42 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
@@ -778,11 +982,9 @@ function App() {
                       <Menu.Item key={i}>
                         {({ active }) =>
                           (
-                            <a onMouseDown={() => playRandom()} className=
-                              {
-                                classNames(active ? 'font-bold text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm')
-                              }>Random
-                            </a>
+                            <button onClick={() => playRandom()} className={classNames(active ? 'font-bold text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm w-full text-left')}>
+                              Random
+                            </button>
                           )
                         }
                       </Menu.Item>
@@ -791,17 +993,17 @@ function App() {
                   </Menu.Items>
               </Menu>
             </div>
-            <div className="flex items-center px-3">
+            <div className="flex items-center px-1">
               <button
                 type="button"
                 className="rounded px-3 py-2 mt-1 w-42 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
-                onClick={createNew}>
+                onClick={createNewChallenge}>
                 Create Challenge
               </button>
             </div>
           </div>
-          <div className="flex items-center flex-col py-4">
-            <div className="grid grid-cols-5 grid-flow-row gap-4">
+          <div className="flex items-center flex-col py-2">
+            <div className="grid grid-cols-5 grid-flow-row gap-2">
               {board.map((row, rowNumber) =>
                 row.map((letter, colNumber) => (
                   <span
@@ -867,6 +1069,8 @@ function App() {
             toggleColorBlindMode={toggleColorBlindMode}
           />
           <Keyboard
+            isSolved={gameState === state.won}
+            onClear={clearSolution}
             letterStatuses={letterStatuses}
             addLetter={addLetter}
             onEnterPress={onEnterPress}

@@ -39,8 +39,8 @@ export const EndGameModal = ({
   function getOccurrence(array, value) {
     var count = 0
     if (array) {
-      for (let i=0; i<array.length; i++) {
-        if (array[i] == value) {
+      for (let i=0; i<500; i++) {
+        if (array[i].state == value) {
           count += 1
         }
       }
@@ -53,8 +53,8 @@ export const EndGameModal = ({
     var losses = 0
     var num = Number(array[500])
     for (let i=0; i<num; i++){
-      if (Number(array[501+i]) > 0) wins++
-      else losses++
+      if (array[501+i].state == "won") wins++
+      else if (array[501 + i].state == "lost") losses++
     }
     return [wins,losses]
   }
