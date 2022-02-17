@@ -275,13 +275,12 @@ function App() {
 
   const [gameStateList, setGameStateList] = useLocalStorage(
     'gameStateList',
-    () => {
-      var x = Array(800).fill({ state: 'none', board: null, wordIndex: -1})
-      x[500] = '0'
-      return x
-    }
+    Array(800).fill({ state: 'none', board: null, wordIndex: -1})
   )
   
+  if (typeof gameStateList[500] === 'object'){
+    gameStateList[500] = '0'
+  }
   const openModal = () => setIsOpen(true)
   const closeModal = () => {
     setIsOpen(false)
@@ -636,6 +635,7 @@ function App() {
 
       if (lastFilledRow && isRowAllGreen(lastFilledRow)) {
         if (day < 0) {
+          setGameState(state.won)
           updateChallengeStatus(newGameStateList, state.won);
         } else {
           setGameState(state.won)
@@ -645,6 +645,7 @@ function App() {
         }
       } else if (currentRow === 6) {
         if (day < 0) {
+          dayState.state = state.lost
           updateChallengeStatus(newGameStateList, state.lost);
         } else {
           setGameState(state.lost)
