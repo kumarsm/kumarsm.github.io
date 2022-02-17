@@ -636,6 +636,7 @@ function App() {
 
       if (lastFilledRow && isRowAllGreen(lastFilledRow)) {
         if (day < 0) {
+          setGameState(state.won)
           updateChallengeStatus(newGameStateList, state.won);
         } else {
           setGameState(state.won)
@@ -645,6 +646,7 @@ function App() {
         }
       } else if (currentRow === 6) {
         if (day < 0) {
+          dayState.state = state.lost
           updateChallengeStatus(newGameStateList, state.lost);
         } else {
           setGameState(state.lost)
