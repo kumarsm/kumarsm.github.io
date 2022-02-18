@@ -150,6 +150,16 @@ const getIsClearedSolution = (idx) => {
   return false;
 }
 
+const calculateBoardScore = (b) => {
+
+  const numGuesses = b?b
+      .flatMap(row => row.join('') ? 1 : 0)
+      .reduce((acc, curr) => acc + curr, 0)
+      : null
+
+  return numGuesses ? `${numGuesses}/6` : '';
+}
+
 const calculateScore = (idx_) => {
   const gameStateList = JSON.parse(localStorage.getItem('gameStateList'))
 
@@ -163,14 +173,7 @@ const calculateScore = (idx_) => {
     if (dayState?.scoreUnknown) {
       return '';
     }
-
-    const numGuesses = board
-      ? board
-        .flatMap(row => row.join('') ? 1 : 0)
-        .reduce((acc, curr) => acc + curr, 0)
-      : null;
-
-    return numGuesses ? `${numGuesses}/6` : '';
+    return calculateBoardScore(board)
   }
 
   return '';
@@ -965,7 +968,7 @@ function App() {
               streakUpdated.current = false
             }}
             day={game_id} 
-            currentRow={currentRow}
+            currentScore={calculateBoardScore(board)}
             cellStatuses={cellStatuses}
           />
           <SettingsModal
@@ -1111,7 +1114,7 @@ function App() {
               streakUpdated.current = false
             }}
             day={game_id}
-            currentRow={currentRow}
+            currentScore={calculateBoardScore(board)}
             cellStatuses={cellStatuses}
           />
           <SettingsModal

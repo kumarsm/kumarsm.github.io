@@ -19,7 +19,7 @@ export const EndGameModal = ({
   answer,
   playAgain,
   day,
-  currentRow,
+  currentScore,
   cellStatuses
 }) => {
   const CloseButton = () => {
@@ -90,7 +90,7 @@ export const EndGameModal = ({
             return
           }
           navigator.clipboard.writeText(
-            `Wordle Challenge ${day()} ${gameState === state.won ? currentRow: 'X'}/6\n\n` +
+            `Wordle Challenge ${day()} ${currentScore}\n\n` +
               cellStatuses
                 .map((row) => {
                   if (row.every((item) => item !== status.unguessed)) {
