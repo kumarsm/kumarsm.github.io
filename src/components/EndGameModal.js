@@ -60,8 +60,8 @@ export const EndGameModal = ({
   }
 
   const gameStateList = JSON.parse(localStorage.getItem('gameStateList'))
-  var challengeWord = JSON.parse(localStorage.getItem('challengeWord'))
-  var challengeIndex = JSON.parse(localStorage.getItem('challengeIndex'))
+  var challengeWord = localStorage.getItem('challengeWord')
+  var challengeIndex = Number(localStorage.getItem('challengeIndex'))
   var wins = getOccurrence(gameStateList, 'won')
   var losses = getOccurrence(gameStateList, 'lost')
   var challenge_counts = countChallenges(gameStateList)

@@ -281,9 +281,16 @@ function App() {
   if (typeof gameStateList[500] === 'object'){
     gameStateList[500] = '0'
   }
-  const openModal = () => setIsOpen(true)
+  const openModal = () => {
+    if (gameState != state.creating) {
+      setIsOpen(true)
+    }
+  }
   const closeModal = () => {
     setIsOpen(false)
+    if (gameState == state.created) {
+      setInitialGameState()
+    }
   }
   const handleInfoClose = () => {
     setFirstTime(false)
@@ -472,6 +479,8 @@ function App() {
     setCellStatuses(initialStates.cellStatuses)
     setLetterStatuses(initialStates.letterStatuses)
     setGameState(state.creating)
+    localStorage.setItem('challengeWord', '')
+    localStorage.setItem('challengeIndex', '')
     setCurrentRow(initialStates.currentRow)
     setCurrentCol(initialStates.currentCol)
     setSubmittedInvalidWord(false)
@@ -533,8 +542,8 @@ function App() {
 
     if (gameState == state.creating) {
       //setCellStatuses(Array(1).fill(Array(5).fill(status.green)))
-      localStorage.setItem('challengeWord', JSON.stringify(word))
-      localStorage.setItem('challengeIndex', JSON.stringify(new_words.indexOf(word.toLowerCase())))
+      localStorage.setItem('challengeWord', word)
+      localStorage.setItem('challengeIndex', new_words.indexOf(word.toLowerCase()).toString)
       setGameState(state.created)
       return
     }
@@ -828,7 +837,7 @@ function App() {
             <h1 className={"flex-1 text-center text-l xxs:text-lg sm:text-3xl tracking-wide font-bold font-og"}>
               WORDLE CHALLENGE! {game_id()} {header_symbol}
             </h1>
-            <button className="mr-2" type="button" onClick={() => setIsOpen(true)}>
+            <button className="mr-2" type="button" onClick={openModal}>
               <Share />
             </button>
             <button type="button" onClick={() => setInfoModalIsOpen(true)}>
@@ -955,7 +964,7 @@ function App() {
             <h1 className={"flex-1 text-center text-xl xxs:text-2xl -mr-6 sm:text-3xl tracking-wide font-bold font-og"}>
               Wordle Challenge! {game_id()} {header_symbol}
             </h1>
-            <button className="mr-6" type="button" onClick={() => setIsOpen(true)}>
+            <button className="mr-6" type="button" onClick={openModal}>
               <Share />
             </button>
             <button type="button" onClick={() => setInfoModalIsOpen(true)}>
