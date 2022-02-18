@@ -24,10 +24,10 @@ export const EndGameModal = ({
 }) => {
   const CloseButton = () => {
     return (
-      <div className={darkMode ? 'dark' : ''}>
+      <div className={"px-2 " + (darkMode ? 'dark' : '')}>
         <button
           type="button"
-          className="rounded px-6 py-2 mt-8 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
+          className="rounded px-6 py-2 mt-6 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
           onClick={playAgain}
         >
           Close
@@ -79,6 +79,7 @@ export const EndGameModal = ({
       }
     }, [buttonPressed])
     return (
+      <div className={"px-2 "+(darkMode ? 'dark' : '')}>
       <button
         type="button"
         className="rounded px-6 py-2 mt-6 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
@@ -122,8 +123,9 @@ export const EndGameModal = ({
           )
         }}
       >
-        {buttonPressed ? 'Copied!' : (gameState === state.created ? 'Share challenge' : 'Share')}
+        {buttonPressed ? 'Copied!' : 'Share'}
       </button>
+      </div>
     )
   }
   return (
@@ -198,20 +200,22 @@ export const EndGameModal = ({
               <p className="mt-3 text-2xl">
                   Won: {wins}
                 </p>
-                <p className="mt-3 text-2xl">
+                <p className="mt-1 text-2xl">
                   Challenges Won: {challenge_counts[0]}
                 </p>
-                <p className="mt-3 text-2xl">
+                <p className="mt-1 text-2xl">
                   Lost: {losses}
                 </p>
-                <p className="mt-3 text-2xl">
+                <p className="mt-1 text-2xl">
                   Challenges Lost: {challenge_counts[1]}
                 </p>
               </div>
             </>
           )}
-          <ShareButton />
-          <CloseButton />
+          <div className="flex flex-force-center items-center py-1">
+            <ShareButton />
+            <CloseButton />
+          </div>
         </div>
       </div>
     </Modal>

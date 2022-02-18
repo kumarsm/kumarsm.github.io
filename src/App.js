@@ -13,6 +13,7 @@ import { SettingsModal } from './components/SettingsModal'
 import { EndGameModal } from './components/EndGameModal'
 import { ChallengeInputModal } from './components/ChallengeInputModal'
 import { Menu } from '@headlessui/react'
+import { AlertModal } from './components/AlertModal'
 
 export const challengeDifficultyLevel = {
   normal: 'wordle',
@@ -272,6 +273,8 @@ function App() {
   const [challengeInputModalIsOpen, setChallengeInputModalIsOpen] = useState(false)
   const [challengeDifficulty, setChallengeDifficulty] = useLocalStorage('challengeDifficulty', challengeDifficultyLevel.normal)
   const [isSavedSolution, setIsSavedSolution] = useState(getIsSavedSolution())
+  const [alertModalIsOpen, setAlertModalIsOpen] = useState(false)
+  const [alertMessage, setAlertMessage] = useState("<no message>")
 
   const [gameStateList, setGameStateList] = useLocalStorage(
     'gameStateList',
@@ -292,6 +295,12 @@ function App() {
       setInitialGameState()
     }
   }
+
+  const showAlert = (message) => {
+    setAlertMessage(message)
+    setAlertModalIsOpen(true)
+  }
+
   const handleInfoClose = () => {
     setFirstTime(false)
     setInfoModalIsOpen(false)
@@ -484,6 +493,7 @@ function App() {
     setCurrentRow(initialStates.currentRow)
     setCurrentCol(initialStates.currentCol)
     setSubmittedInvalidWord(false)
+    setIsSavedSolution(false)
     setExactGuesses({})
     const newBoard = [
       ['', '', '', '', ''],
@@ -514,14 +524,14 @@ function App() {
  
 
   const isValidWord = (word) => {
-    if (word.length < 5) return false
+    if (word.length < 5) return [false, 'Please enter a 5 letter word']
     var validWord = new_words.indexOf(word.toLowerCase()) >= 0
-    if (!validWord) return false
+    if (!validWord) return [false, word+ ' is not a valid word!']
     if (gameState == state.creating) {
-      if (challengeDifficulty == challengeDifficultyLevel.hard) return true;
-      else return wordle_answers.indexOf(word.toLowerCase()) >= 0
+      if (challengeDifficulty == challengeDifficultyLevel.hard) return [true, ''];
+      else return [wordle_answers.indexOf(word.toLowerCase()) >= 0, word+' is not in the wordle answers!']
     }
-    if (!challengePlayInStrict) return true;
+    if (!challengePlayInStrict) return [true, ''];
     const guessedLetters = Object.entries(letterStatuses).filter(([letter, letterStatus]) =>
       [status.yellow, status.green].includes(letterStatus)
     )
@@ -529,13 +539,16 @@ function App() {
     const greensUsed = Object.entries(exactGuesses).every(
       ([position, letter]) => word[parseInt(position)] === letter
     )
-    if (!yellowsUsed || !greensUsed) return false
-    return true
+    if (!yellowsUsed || !greensUsed) return [false, 'In strict mode play, you must use all the hints given']
+    return [true, '']
   }
 
   const onEnterPress = () => {
     const word = board[currentRow].join('')
-    if (!isValidWord(word)) {
+
+    const [valid, msg] = isValidWord(word)
+    if (!valid) {
+      showAlert(msg)
       setSubmittedInvalidWord(true)
       return
     }
@@ -543,7 +556,7 @@ function App() {
     if (gameState == state.creating) {
       //setCellStatuses(Array(1).fill(Array(5).fill(status.green)))
       localStorage.setItem('challengeWord', word)
-      localStorage.setItem('challengeIndex', new_words.indexOf(word.toLowerCase()).toString)
+      localStorage.setItem('challengeIndex', new_words.indexOf(word.toLowerCase()).toString())
       setGameState(state.created)
       return
     }
@@ -707,6 +720,36 @@ function App() {
           ? '0.2em 0.2em calc(0.2em * 2) #252834, calc(0.2em * -1) calc(0.2em * -1) calc(0.2em * 2) #43475C'
           : '0.2em 0.2em calc(0.2em * 2) #A3A7BD, calc(0.2em * -1) calc(0.2em * -1) calc(0.2em * 2) #FFFFFF'
       }`,
+      border: 'none',
+      borderRadius: '1rem',
+      maxWidth: '475px',
+      maxHeight: '650px',
+      position: 'relative',
+    },
+  }
+
+  const alertModalStyles = {
+    overlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: darkMode ? 'hsl(231, 16%, 25%)' : 'hsl(231, 16%, 92%)',
+    },
+    content: {
+      top: '50%',
+      left: '50%',
+      right: 'auto',
+      bottom: 'auto',
+      transform: 'translate(-50%, -50%)',
+      //height: 'calc(100% - 2rem)',
+      //width: 'calc(100% - 2rem)',
+      backgroundColor: darkMode ? 'hsl(231, 16%, 25%)' : 'hsl(231, 16%, 92%)',
+      boxShadow: `${darkMode
+          ? '0.2em 0.2em calc(0.2em * 2) #252834, calc(0.2em * -1) calc(0.2em * -1) calc(0.2em * 2) #43475C'
+          : '0.2em 0.2em calc(0.2em * 2) #A3A7BD, calc(0.2em * -1) calc(0.2em * -1) calc(0.2em * 2) #FFFFFF'
+        }`,
       border: 'none',
       borderRadius: '1rem',
       maxWidth: '475px',
@@ -899,6 +942,14 @@ function App() {
             colorBlindMode={colorBlindMode}
             styles={modalStyles}
           />
+          <AlertModal
+            isOpen={alertModalIsOpen}
+            handleClose={() => setAlertModalIsOpen(false)}
+            darkMode={darkMode}
+            colorBlindMode={colorBlindMode}
+            styles={alertModalStyles}
+            message={alertMessage}
+          />
           <EndGameModal
             isOpen={modalIsOpen}
             handleClose={closeModal}
@@ -1036,6 +1087,14 @@ function App() {
             darkMode={darkMode}
             colorBlindMode={colorBlindMode}
             styles={modalStyles}
+          />
+          <AlertModal
+            isOpen={alertModalIsOpen}
+            handleClose={() => setAlertModalIsOpen(false)}
+            darkMode={darkMode}
+            colorBlindMode={colorBlindMode}
+            styles={alertModalStyles}
+            message={alertMessage}
           />
           <EndGameModal
             isOpen={modalIsOpen}
