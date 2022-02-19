@@ -397,7 +397,8 @@ function App() {
         }
       })
     }
-  }, [currentCol, currentRow, board])
+  //}, [currentCol, currentRow, board])
+  }, [isSavedSolution])
 
   const setInitialGameState = () => {
     const gameStateList = JSON.parse(localStorage.getItem('gameStateList'))
@@ -566,6 +567,9 @@ function App() {
 
     if (currentRow === 6) return
     
+    updateCellStatuses(word, currentRow)
+    updateLetterStatuses(word)
+
     setCurrentRow((prev) => prev + 1)
     setCurrentCol(0)
   }
