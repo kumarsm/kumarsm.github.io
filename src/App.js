@@ -65,7 +65,7 @@ const getDay = (og_day) => {
     const urlParams = new URLSearchParams(search);
     var i = urlParams.get('wi');
     if ((i && i > 0) || i < new_words.length ) {
-      wordIndex = i;
+      wordIndex = Number(i);
       console.log('wordIndex set to '+wordIndex);
       if (getDayAnswer(og_day).toLowerCase() === new_words[wordIndex]){
         day = og_day;
@@ -254,7 +254,6 @@ function App() {
   const [settingsModalIsOpen, setSettingsModalIsOpen] = useState(false)
   const [challengeInputModalIsOpen, setChallengeInputModalIsOpen] = useState(false)
   const [challengeDifficulty, setChallengeDifficulty] = useLocalStorage('challengeDifficulty', challengeDifficultyLevel.normal)
-  const [isSavedSolution, setIsSavedSolution] = useState(getIsSavedSolution())
   const [alertModalIsOpen, setAlertModalIsOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState("<no message>")
 
@@ -265,7 +264,11 @@ function App() {
   
   if (typeof gameStateList[500] === 'object'){
     gameStateList[500] = '0'
+    for (var i = 501; i < 800; i++) {
+      gameStateList[i] = { state: 'none', board: null, wordIndex: -1 }
+    }
   }
+  const [isSavedSolution, setIsSavedSolution] = useState(getIsSavedSolution())
   const openModal = () => {
     if (gameState !== state.creating) {
       setIsOpen(true)
@@ -377,7 +380,7 @@ function App() {
       })
     }
   //}, [currentCol, currentRow, board])
-  }, [isSavedSolution])
+  }, [isSavedSolution, board])
 
   const setInitialGameState = () => {
     const gameStateList = JSON.parse(localStorage.getItem('gameStateList'))
@@ -385,9 +388,9 @@ function App() {
     setAnswer(initialStates.answer)
     setCurrentRow(initialStates.currentRow)
     setCurrentCol(initialStates.currentCol)
+    setExactGuesses({})
     setCellStatuses(initialStates.cellStatuses)
     setLetterStatuses(initialStates.letterStatuses)
-    setExactGuesses({})
 
     if (gameStateList && getIsSavedSolution()) {
       setIsSavedSolution(true)
@@ -757,6 +760,7 @@ function App() {
   const playRandom = () => playDay(Math.floor(Math.random() * (og_day-1)) + 1)
 
   const playDay = (i) => {
+    if (day == i) return
     day = i;
     var word = getDayAnswer(i);
     wordIndex = new_words.indexOf(word.toLowerCase());
@@ -765,8 +769,9 @@ function App() {
   }
 
   const playIndex = (i) => {
+    if ( wordIndex == i && day < 0) return
     if (i >= 0 || i < new_words.length) {
-      wordIndex = i;
+      wordIndex = Number(i);
       day = -1;
       setDay(i)
       //play()
