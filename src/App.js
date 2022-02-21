@@ -64,36 +64,15 @@ const getDay = (og_day) => {
   if (search) {
     const urlParams = new URLSearchParams(search);
     var i = urlParams.get('wi');
-    if ( i && i > 0 || i < new_words.length ) {
+    if ((i && i > 0) || i < new_words.length ) {
       wordIndex = i;
       console.log('wordIndex set to '+wordIndex);
-      if (getDayAnswer(og_day).toLowerCase() == new_words[wordIndex]){
+      if (getDayAnswer(og_day).toLowerCase() === new_words[wordIndex]){
         day = og_day;
         return og_day;
       }
       return -1;
     }  
-    if (isNaN(search.slice(1))) {
-      url_day = og_day
-    } else {
-      url_day = parseInt(search.slice(1), 10);
-    }
-    if (url_day > og_day || url_day < 1) {
-      url_day = og_day
-    }
-    return url_day
-  }
-  else {
-    return og_day
-  }
-}
-
-const getWordIndex = (og_day) => {
-  const { search } = document.location;
-  const urlParams = new URLSearchParams(search);
-  const word_index = urlParams.get('wi');
-  var url_day = og_day
-  if (search) {
     if (isNaN(search.slice(1))) {
       url_day = og_day
     } else {
@@ -132,7 +111,7 @@ const getIsSavedSolution = () => {
       return dayState && dayState.state === state.won && dayState.board !== null
     } else {
       const challengeState = getCurrentChallengeState(gameStateList)
-      return challengeState && challengeState.state == state.won && challengeState.board != null
+      return challengeState && challengeState.state === state.won && challengeState.board != null
     }
   }
 
@@ -200,7 +179,7 @@ const oneTimeGameStateListUpdate = (stringGameStateList) => {
           state: gameState,
           board: null
         }
-      } else if ( idx == 500 ){
+      } else if ( idx === 500 ){
         count = Number (gameState)
       } else {
         if ( idx > 500 + count ) return
@@ -288,13 +267,13 @@ function App() {
     gameStateList[500] = '0'
   }
   const openModal = () => {
-    if (gameState != state.creating) {
+    if (gameState !== state.creating) {
       setIsOpen(true)
     }
   }
   const closeModal = () => {
     setIsOpen(false)
-    if (gameState == state.created) {
+    if (gameState === state.created) {
       setInitialGameState()
     }
   }
@@ -328,7 +307,7 @@ function App() {
   const [exactGuesses, setExactGuesses] = useState({})
 
   useEffect(() => {
-    if (gameState == state.won || gameState == state.lost || gameState == state.created) {
+    if (gameState === state.won || gameState === state.lost || gameState === state.created) {
       if (!isSavedSolution) {
         setTimeout(() => {
           openModal()
@@ -660,7 +639,6 @@ function App() {
     if (!isSavedSolution) {
       const newGameStateList = JSON.parse(localStorage.getItem('gameStateList'))
       const dayState = newGameStateList[day-1]
-      const count = Number(newGameStateList[500])
 
       if (lastFilledRow && isRowAllGreen(lastFilledRow)) {
         if (day < 0) {
@@ -776,11 +754,7 @@ function App() {
     setExactGuesses({})
   }
 
-  const playFirst = () => playDay(1)
-  const playPrevious = () => playDay(day - 1)
   const playRandom = () => playDay(Math.floor(Math.random() * (og_day-1)) + 1)
-  const playNext = () => playDay(day + 1)
-  const playLast = () => playDay(og_day)
 
   const playDay = (i) => {
     day = i;
@@ -823,9 +797,9 @@ function App() {
       header_symbol = (tempGameStateList[day - 1].state == 'won') ? ('✔') : ((tempGameStateList[day - 1].state == 'lost') ? ('✘') : '')
     } else {
       var count = Number(tempGameStateList[500])
-      for (var i = 0; i < count; i++) {
+      for (i = 0; i < count; i++) {
         if (tempGameStateList[501+i].wordIndex == wordIndex) {
-          var header_symbol = (tempGameStateList[501+i].state == 'won') ? ('✔') : ((tempGameStateList[501+i].state == 'lost') ? ('✘') : '')
+          header_symbol = (tempGameStateList[501+i].state == 'won') ? ('✔') : ((tempGameStateList[501+i].state == 'lost') ? ('✘') : '')
           break
         }
       }
@@ -835,7 +809,7 @@ function App() {
   for (var j = 0; j < Number(tempGameStateList[500]); j++) {
     items_list.push(501 + j);
   }
-  for (var i = 1; i <= og_day; i++) {
+  for (i = 1; i <= og_day; i++) {
     items_list.push(i)
   }
   var elements = items_list.map(i => {
@@ -847,7 +821,7 @@ function App() {
               tempGameStateList[i<500?i-1:i].state,
               getIsClearedSolution(i<500?i:i+1) ? "cleared" : "",
               active ? 'font-bold text-gray-900' : 'text-gray-700',
-              'flex justify-between block px-4 py-2 text-sm w-full',
+              'flex justify-between px-4 py-2 text-sm w-full',
             )}>
                 <span>
                   {(i < 500 ? 'Day '+i : '#'+tempGameStateList[i].wordIndex)
@@ -936,7 +910,7 @@ function App() {
                       letter
                     )} inline-flex items-center font-medium justify-center text-xl w-[14vw] h-[14vw] xs:w-14 xs:h-14 sm:w-20 sm:h-20 rounded`}
                   >
-                    {letter}
+                    { isSavedSolution? ' ': letter}
                   </span>
                 ))
               )}
@@ -1082,7 +1056,7 @@ function App() {
                       letter
                     )} inline-flex items-center font-bold justify-center text-3xl w-[14vw] h-[14vw] xs:w-14 xs:h-14 sm:w-20 sm:h-20 rounded`}
                   >
-                    {letter}
+                    { isSavedSolution? ' ': letter}
                   </span>
                 ))
               )}
