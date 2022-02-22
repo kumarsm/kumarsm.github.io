@@ -14,6 +14,7 @@ import { EndGameModal } from './components/EndGameModal'
 import { ChallengeInputModal } from './components/ChallengeInputModal'
 import { Menu } from '@headlessui/react'
 import { AlertModal } from './components/AlertModal'
+import Fail from './data/Cross.png'
 
 export const challengeDifficultyLevel = {
   normal: 'wordle',
@@ -43,8 +44,10 @@ const getDayAnswerWithIndex = (index) => {
   return ""
 }
 
-// Set the day number of the puzzle to display and show it as the address bar query string
+var isGameReviewOn = false
+var gameBoardUrl = null
 
+// Set the day number of the puzzle to display and show it as the address bar query string
 const setDay = newDay => {
   if (wordIndex < 0) {
     if (newDay < 1 || newDay > og_day) {
@@ -53,20 +56,25 @@ const setDay = newDay => {
     day = newDay;
     var word = getDayAnswer(day);
     wordIndex = new_words.indexOf(word.toLowerCase());
-    console.log('wordIndex set to '+wordIndex);
   }
+  if (isGameReviewOn) return
   window.history.pushState({}, '', '?wi=' + wordIndex);
 };
+
 
 const getDay = (og_day) => {
   const { search } = document.location;
   var url_day = og_day
   if (search) {
     const urlParams = new URLSearchParams(search);
+    gameBoardUrl = urlParams.get('ib')
+    if (gameBoardUrl && gameBoardUrl !== "") {
+      isGameReviewOn = true
+      return og_day
+    }
     var i = urlParams.get('wi');
     if ((i && i > 0) || i < new_words.length ) {
       wordIndex = Number(i);
-      console.log('wordIndex set to '+wordIndex);
       if (getDayAnswer(og_day).toLowerCase() === new_words[wordIndex]){
         day = og_day;
         return og_day;
@@ -139,6 +147,95 @@ const calculateBoardScore = (b) => {
   return numGuesses ? `${numGuesses}/6` : '';
 }
 
+const conf_matrix = [
+  'aBcDeFgHiJ',
+  'kLmNoPqRsT',
+  'UvWxYzAbCd',
+  'EfGhIjKlMn',
+  'oPqRsTuVwX',
+  'zAbCdEfGhI'
+]
+
+const atoi = (row, str) => {
+  var num_str = [];
+  for (let i = 0; i < 5; i++) {
+    num_str.push('0123456789'[conf_matrix[row].indexOf(str[i])])
+  }
+  return Number(num_str.join(''))
+}
+
+const calculateBoardUrl = (board) => {
+  const max = new_words.length - 1;
+  var b2 = [
+    ['', '', '', '', ''],
+    ['', '', '', '', ''],
+    ['', '', '', '', ''],
+    ['', '', '', '', ''],
+    ['', '', '', '', ''],
+    ['', '', '', '', ''],
+  ]
+  var answerIdx = -1
+  var num_str, word
+  if (!board || board[0][0] === '') return ""
+
+  board.forEach((row, idx) => {
+    word = row.join('')
+    if (!word) { 
+      word = new_words[Math.floor(Math.random() * (max + 1))]
+      if (answerIdx < 0) answerIdx = Number(num_str)
+    }
+    num_str = new_words.indexOf(word.toLowerCase()).toString().padStart(5, '0')
+    for (let i =0; i <5; i++ ) {
+      b2[idx][i] = conf_matrix[idx][Number(num_str[i])]
+    }
+  })
+  var url = window.location.origin+window.location.pathname+"?ib="+answerIdx.toString()+':'
+  b2.forEach((row, idx) => {
+    url = url+row.join('')
+  })
+  return url;
+}
+
+const getBoardFromUrl = (urlString) => {
+  var board = [
+    ['', '', '', '', ''],
+    ['', '', '', '', ''],
+    ['', '', '', '', ''],
+    ['', '', '', '', ''],
+    ['', '', '', '', ''],
+    ['', '', '', '', ''],
+  ]
+
+  var url, answerIndex
+
+  try {
+    answerIndex = Number(urlString.split(':')[0])
+    url = urlString.split(':')[1]
+  } catch {
+    return [false, board, -1]
+  }
+
+  var skip = false
+  var answerFound = false
+  if (url.length != 30) return [false, board, -1]
+  for (let i = 0; i < 6; i++ ){
+    if (skip) {
+      for(let j = 0; j < 5; j++) board[i][j] = ''
+      continue
+    }
+    var row_str = url.slice(i*5, (i*5)+5)
+    var idx = atoi(i, row_str)
+    if (idx < 0 || idx >= new_words.length) return [false, board, -1]
+    var word = new_words[idx].toUpperCase()
+    for (let j=0; j < 5; j++) board[i][j] = word[j]
+    if (idx == answerIndex) {
+      skip = true
+      answerFound = true
+    }
+  }
+  return [answerFound, board, answerIndex]
+}
+
 const calculateScore = (idx_) => {
   const gameStateList = JSON.parse(localStorage.getItem('gameStateList'))
 
@@ -152,6 +249,8 @@ const calculateScore = (idx_) => {
     if (dayState?.scoreUnknown) {
       return '';
     }
+    //const url = calculateBoardUrl(board) // testing
+    //const b2 = getBoardFromUrl(url.split('/)[3]) // testing
     return calculateBoardScore(board)
   }
 
@@ -172,12 +271,14 @@ const oneTimeGameStateListUpdate = (stringGameStateList) => {
             scoreUnknown: true,
             board: new Array(6)
               .fill(wordle_answers[idx].toUpperCase().split(''), 0, 1)
-              .fill(new Array(5).fill(''), 1)
+              .fill(new Array(5).fill(''), 1),
+            wordIndex: new_words.indexOf(wordle_answers[idx])
           }
         }
         return {
           state: gameState,
-          board: null
+          board: null,
+          wordIndex: new_words.indexOf(wordle_answers[idx])
         }
       } else if ( idx === 500 ){
         count = Number (gameState)
@@ -208,6 +309,12 @@ var day = -1;
 var wordIndex = -1;
 const og_day = getOGDay()
 setDay(getDay(og_day));
+var game_board, gameIdx, gameUrlValid
+
+if (isGameReviewOn) {
+  [gameUrlValid, game_board, gameIdx] = getBoardFromUrl(gameBoardUrl)
+  //if (!gameUrlValid) isGameReviewOn = false;
+}
 
 
 function App() {
@@ -215,7 +322,12 @@ function App() {
   const reloadCount = Number(sessionStorage.getItem('reloadCount')) || 0;
 
   const initialStates = {
-    answer: () => getDayAnswerWithIndex(wordIndex),
+    answer: () => {
+      if (isGameReviewOn && gameUrlValid) {
+        return new_words[gameIdx].toUpperCase()
+      }
+      return getDayAnswerWithIndex(wordIndex)
+    },
     gameState: state.playing,
     board: [
       ['', '', '', '', ''],
@@ -239,7 +351,9 @@ function App() {
 
   const [answer, setAnswer] = useState(initialStates.answer)
   const [gameState, setGameState] = useState(initialStates.gameState)
-  const [board, setBoard] = useState(initialStates.board)
+  const [board, setBoard] = useState(
+      initialStates.board
+    )
   const [cellStatuses, setCellStatuses] = useState(initialStates.cellStatuses)
   const [currentRow, setCurrentRow] = useState(initialStates.currentRow)
   const [currentCol, setCurrentCol] = useState(initialStates.currentCol)
@@ -269,6 +383,7 @@ function App() {
     }
   }
   const [isSavedSolution, setIsSavedSolution] = useState(getIsSavedSolution())
+
   const openModal = () => {
     if (gameState !== state.creating) {
       setIsOpen(true)
@@ -353,7 +468,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (reloadCount < 1) {
+    if (reloadCount < 1 && !isGameReviewOn) {
       window.location.reload(true);
       sessionStorage.setItem('reloadCount', String(reloadCount + 1));
     } else {
@@ -392,7 +507,11 @@ function App() {
     setCellStatuses(initialStates.cellStatuses)
     setLetterStatuses(initialStates.letterStatuses)
 
-    if (gameStateList && getIsSavedSolution()) {
+    if (isGameReviewOn && gameUrlValid) {
+      setIsSavedSolution(true)
+      setBoard(game_board)
+      return
+    } else if  (gameStateList && getIsSavedSolution()) {
       setIsSavedSolution(true)
       setGameState(state.won)
       if (day > 0) {
@@ -470,7 +589,6 @@ function App() {
     }
   }
   const createNewChallenge = () => {
-    console.log('creating new challenge')
     setCellStatuses(initialStates.cellStatuses)
     setLetterStatuses(initialStates.letterStatuses)
     setGameState(state.creating)
@@ -501,7 +619,6 @@ function App() {
   }
 
   const onChallengeInputSubmit = (val) => {
-    console.log('Playing Challenge: '+val);
     //challengeInputModalCloseHandle();
     // do things here for playing challenge chosen
     //playIndex(val)
@@ -651,7 +768,8 @@ function App() {
           setGameState(state.won)
           dayState.board = board
           dayState.state = state.won
-          dayState.scoreUnknown = false;
+          dayState.scoreUnknown = false
+          dayState.wordIndex = wordIndex
         }
       } else if (currentRow === 6) {
         if (day < 0) {
@@ -660,6 +778,7 @@ function App() {
         } else {
           setGameState(state.lost)
           dayState.state = state.lost
+          dayState.wordIndex = wordIndex
         }
       }
       localStorage.setItem('gameStateList', JSON.stringify(newGameStateList))
@@ -855,7 +974,57 @@ function App() {
     html.setAttribute( 'class', 'bg' );
   }
 
+
+
   if (window.innerWidth < 600) {
+    if (isGameReviewOn) {
+      if (gameUrlValid) {
+      return (
+        <div className={darkMode ? 'dark h-fill' : 'h-fill'}>
+          <div className={`flex flex-col justify-between h-fill bg-background dark:bg-background-dark`}>
+            <header className="flex items-center py-2 px-3 text-primary dark:text-primary-dark">
+              <h1 className={"flex-1 text-center text-l xxs:text-lg sm:text-3xl tracking-wide font-bold font-og"}>
+                Wordle Challenge Game Review {gameIdx}
+              </h1>
+            </header>
+          </div>
+          <div className="flex items-center flex-col py-4">
+            <div className="grid grid-cols-5 grid-flow-row gap-4">
+              {board.map((row, rowNumber) =>
+                row.map((letter, colNumber) => (
+                  <span
+                    key={colNumber}
+                    className={`${getCellStyles(
+                      rowNumber,
+                      colNumber,
+                      letter
+                    )} inline-flex items-center font-bold justify-center text-3xl w-[14vw] h-[14vw] xs:w-14 xs:h-14 sm:w-20 sm:h-20 rounded`}
+                  >
+                    {' '}
+                  </span>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )
+      } else {
+        return (
+        <div className={darkMode ? 'dark h-fill' : 'h-fill'}>
+          <div className={`flex flex-col justify-between h-fill bg-background dark:bg-background-dark`}>
+            <header className="flex items-center py-2 px-3 text-primary dark:text-primary-dark">
+              <h1 className={"flex-1 text-center text-l xxs:text-lg sm:text-3xl tracking-wide font-bold font-og"}>
+                Oops! Invalid URL!! 
+              </h1>
+            </header>
+              <div className="flex items-center px-3 flex-col justify-center">
+                <img src={Fail} alt="success" height="auto" width="40%" />
+              </div>
+          </div>
+        </div>
+        )
+      }
+    } else 
     return (
       <div className={darkMode ? 'dark h-fill' : 'h-fill'}>
         <div className={`flex flex-col justify-between h-fill bg-background dark:bg-background-dark`}>
@@ -863,7 +1032,7 @@ function App() {
             <button type="button" onClick={() => setSettingsModalIsOpen(true)}>
               <Settings />
             </button>
-            <h1 className={"flex-1 text-center text-l xxs:text-lg sm:text-3xl tracking-wide font-bold font-og"}>
+            <h1 className={"flex-1 text-center py-2 text-l xxs:text-lg sm:text-3xl tracking-wide font-bold font-og"}>
               WORDLE CHALLENGE! {game_id()} {header_symbol}
             </h1>
             <button className="mr-2" type="button" onClick={openModal}>
@@ -953,6 +1122,7 @@ function App() {
             day={game_id} 
             currentScore={calculateBoardScore(board)}
             cellStatuses={cellStatuses}
+            gameUrl={()=>calculateBoardUrl(board)}
           />
           <SettingsModal
             isOpen={settingsModalIsOpen}
@@ -991,6 +1161,54 @@ function App() {
     )
   }
   else {
+    if (isGameReviewOn) {
+      if (gameUrlValid) {
+        return (
+          <div className={darkMode ? 'dark h-fill' : 'h-fill'}>
+            <div className={`flex flex-col justify-between h-fill bg-background dark:bg-background-dark`}>
+              <header className="flex items-center py-2 px-3 text-primary dark:text-primary-dark">
+                <h1 className={"flex-1 text-center py-2 text-xl xxs:text-2xl -mr-6 sm:text-3xl tracking-wide font-bold font-og"}>
+                  Wordle Challenge Game Review {gameIdx}
+                </h1>
+              </header>
+            </div>
+            <div className="flex items-center flex-col py-2">
+              <div className="grid grid-cols-5 grid-flow-row gap-2">
+                {board.map((row, rowNumber) =>
+                  row.map((letter, colNumber) => (
+                    <span
+                      key={colNumber}
+                      className={`${getCellStyles(
+                        rowNumber,
+                        colNumber,
+                        letter
+                      )} inline-flex items-center font-bold justify-center text-3xl w-[14vw] h-[14vw] xs:w-14 xs:h-14 sm:w-20 sm:h-20 rounded`}
+                    >
+                      {' '}
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      } else {
+        return (
+        <div className={darkMode ? 'dark h-fill' : 'h-fill'}>
+          <div className={`flex flex-col justify-between h-fill bg-background dark:bg-background-dark`}>
+            <header className="flex items-center py-2 px-3 text-primary dark:text-primary-dark">
+              <h1 className={"flex-1 text-center py-2 text-xl xxs:text-2xl -mr-6 sm:text-3xl tracking-wide font-bold font-og"}>
+                Oops!  Invalid URL!!
+              </h1>
+            </header>
+          </div>
+            <div className="flex items-center px-3 flex-col justify-center">
+              <img src={Fail} alt="success" height="auto" width="40%" />
+            </div>
+        </div>
+        )
+      }
+    } else 
     return (
       <div className={darkMode ? 'dark h-fill' : 'h-fill'}>
         <div className={`flex flex-col justify-between h-fill bg-background dark:bg-background-dark`}>
@@ -1099,6 +1317,7 @@ function App() {
             day={game_id}
             currentScore={calculateBoardScore(board)}
             cellStatuses={cellStatuses}
+            gameUrl={()=>calculateBoardUrl(board)}
           />
           <SettingsModal
             isOpen={settingsModalIsOpen}

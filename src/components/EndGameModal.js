@@ -20,7 +20,8 @@ export const EndGameModal = ({
   playAgain,
   day,
   currentScore,
-  cellStatuses
+  cellStatuses,
+  gameUrl
 }) => {
   const CloseButton = () => {
     return (
@@ -94,7 +95,7 @@ export const EndGameModal = ({
               cellStatuses
                 .map((row) => {
                   if (row.every((item) => item !== status.unguessed)) {
-                    return (
+                    return ('     '+
                       row
                         .map((state) => {
                           switch (state) {
@@ -119,7 +120,7 @@ export const EndGameModal = ({
                     return ''
                   }
                 })
-                .join('')
+              .join('') + '\n' + 'Review this game at: ' + `${gameUrl()}`
           )
         }}
       >
