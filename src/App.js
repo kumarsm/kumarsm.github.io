@@ -193,7 +193,7 @@ const calculateBoardUrl = (board) => {
   b2.forEach((row, idx) => {
     url = url+row.join('')
   })
-  return url;
+  return answerIdx < 0? '': url;
 }
 
 const getBoardFromUrl = (urlString) => {

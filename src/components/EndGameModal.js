@@ -71,6 +71,12 @@ export const EndGameModal = ({
     return document.location.origin+document.location.pathname+'?wi='+challengeIndex
   }
 
+  const url_message = () => {
+    if (currentScore !== '' && gameUrl() !== '') {
+        return 'Review this game here: '+ gameUrl()
+    }
+    return ''
+  }
 
   const ShareButton = (props) => {
     const [buttonPressed, setButtonPressed] = useState(false)
@@ -120,7 +126,7 @@ export const EndGameModal = ({
                     return ''
                   }
                 })
-              .join('') + '\n' + 'Review this game at: ' + `${gameUrl()}`
+              .join('') + '\n' + url_message()
           )
         }}
       >
