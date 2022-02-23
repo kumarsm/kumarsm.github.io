@@ -148,18 +148,20 @@ const calculateBoardScore = (b) => {
 }
 
 const conf_matrix = [
-  'aBcDeFgHiJ',
-  'kLmNoPqRsT',
-  'UvWxYzAbCd',
-  'EfGhIjKlMn',
-  'oPqRsTuVwX',
-  'zAbCdEfGhI'
+  'DHeJFcBaig',
+  'TqkRLsmoNP',
+  'bYWvxUzAdC',
+  'flMEnKhGIj',
+  'qRXswPouTV',
+  'dzAbhGCfEI'
 ]
 
 const atoi = (row, str) => {
-  var num_str = [];
+  var num_str = [], x;
   for (let i = 0; i < 5; i++) {
-    num_str.push('0123456789'[conf_matrix[row].indexOf(str[i])])
+    x = conf_matrix[row].indexOf(str[i])
+    if (x < 0) return -1
+    num_str.push('0123456789'[x])
   }
   return Number(num_str.join(''))
 }
@@ -174,6 +176,7 @@ const calculateBoardUrl = (board) => {
     ['', '', '', '', ''],
     ['', '', '', '', ''],
   ]
+  var numbers = [Array(6)]
   var answerIdx = -1
   var num_str, word
   if (!board || board[0][0] === '') return ""
@@ -181,10 +184,12 @@ const calculateBoardUrl = (board) => {
   board.forEach((row, idx) => {
     word = row.join('')
     if (!word) { 
-      word = new_words[Math.floor(Math.random() * (max + 1))]
       if (answerIdx < 0) answerIdx = Number(num_str)
+      numbers[row] = answerIdx
+      word = new_words[answerIdx]
     }
-    num_str = new_words.indexOf(word.toLowerCase()).toString().padStart(5, '0')
+    numbers[row] = new_words.indexOf(word.toLowerCase())
+    num_str = numbers[row].toString().padStart(5, '0')
     for (let i =0; i <5; i++ ) {
       b2[idx][i] = conf_matrix[idx][Number(num_str[i])]
     }
@@ -193,7 +198,8 @@ const calculateBoardUrl = (board) => {
   b2.forEach((row, idx) => {
     url = url+row.join('')
   })
-  return answerIdx < 0? '': url;
+  var tot = numbers.reduce((tot, v) => tot + v).toString()
+  return answerIdx < 0? '': url
 }
 
 const getBoardFromUrl = (urlString) => {
@@ -215,21 +221,16 @@ const getBoardFromUrl = (urlString) => {
     return [false, board, -1]
   }
 
-  var skip = false
   var answerFound = false
   if (url.length != 30) return [false, board, -1]
   for (let i = 0; i < 6; i++ ){
-    if (skip) {
-      for(let j = 0; j < 5; j++) board[i][j] = ''
-      continue
-    }
     var row_str = url.slice(i*5, (i*5)+5)
     var idx = atoi(i, row_str)
     if (idx < 0 || idx >= new_words.length) return [false, board, -1]
+    if (answerFound && idx != answerIndex) return [false, board, -1]
     var word = new_words[idx].toUpperCase()
-    for (let j=0; j < 5; j++) board[i][j] = word[j]
+    for (let j=0; j < 5; j++) board[i][j] = answerFound? '': word[j]
     if (idx == answerIndex) {
-      skip = true
       answerFound = true
     }
   }
