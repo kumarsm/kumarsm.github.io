@@ -73,7 +73,7 @@ export const EndGameModal = ({
 
   const url_message = () => {
     if (currentScore !== '' && gameUrl() !== '') {
-        return 'Review this game here: '+ gameUrl()
+        return 'Verify this score at: \''+ gameUrl()+'\''
     }
     return ''
   }
