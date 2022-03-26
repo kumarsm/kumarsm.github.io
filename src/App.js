@@ -617,6 +617,7 @@ function App() {
   const challengeInputModalCloseHandle = () => {
     setChallengeInputModalIsOpen(false)
     setGameState(state.playing)
+    setInitialGameState()
   }
 
   const onChallengeInputSubmit = (val) => {
@@ -1047,6 +1048,7 @@ function App() {
             <div className="flex items-center px-2">
               <button
                 type="button"
+                title="Play a wordle challenge"
                 className="rounded px-2 py-2 w-24 text-sm nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
                 onClick={playChallengeHandle}>Play Challenge
               </button>
@@ -1054,7 +1056,9 @@ function App() {
             <div className="flex items-center px-2">
               <Menu as="div" className="relative inline-block text-left">
                 <div>
-                  <Menu.Button className="blurthis rounded px-2 py-2 w-24 text-sm nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark">
+                  <Menu.Button className="blurthis rounded px-2 py-2 w-24 text-sm nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
+                  title="Play previous wordle daily or a challenge"
+                  >
                     Play Previous
                   </Menu.Button>
                 </div>
@@ -1068,6 +1072,7 @@ function App() {
             <div className="flex items-center px-2">
               <button
                 type="button"
+                title="Create a wordle challenge and share"
                 className="rounded px-2 py-2 w-24 text-sm nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
                 onClick={createNewChallenge}>Create Challenge
               </button>
@@ -1233,13 +1238,16 @@ function App() {
                 type="button"
                 className="rounded px-3 py-2 mt-1 w-42 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
                 //onClick={playFirst}>First
+                title="Play a wordle challenge"
                 onClick={playChallengeHandle}>Play Challenge
               </button>
             </div>
             <div className="flex items-center px-3">
               <Menu as="div" className="relative inline-block text-left">
                 <div>
-                  <Menu.Button className="blurthis rounded px-3 py-2 mt-1 w-42 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark">
+                  <Menu.Button className="blurthis rounded px-3 py-2 mt-1 w-42 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
+                  title="Play previous wordle daily or a challenge"
+                  >
                     Play Previous
                   </Menu.Button>
                 </div>
@@ -1263,6 +1271,7 @@ function App() {
               <button
                 type="button"
                 className="rounded px-3 py-2 mt-1 w-42 text-lg nm-flat-background dark:nm-flat-background-dark hover:nm-inset-background dark:hover:nm-inset-background-dark text-primary dark:text-primary-dark"
+                title="Create a wordle challenge and share"
                 onClick={createNewChallenge}>
                 Create Challenge
               </button>
