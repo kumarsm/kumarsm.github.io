@@ -101,7 +101,7 @@ const getOGDay = () => {
   const date1 = new Date('6/21/21')
   const diffTime = Math.abs(today - date1)
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  return diffDays
+  return (diffDays%500)
 }
 
 const getCurrentChallengeState = (gameStateList) => {
